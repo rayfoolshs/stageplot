@@ -1,6 +1,24 @@
+import { useState } from "react";
 import { createEmptyDoc } from "@stageplot/shared";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
+import { downloadPdf } from "../../lib/pdf";
+
+const PRINT_DOC_KEY = "stageplot:print-doc";
+
+/** Open the read-only print view in a new tab (browser print → save as PDF). */
+function openPrintView() {
+  localStorage.setItem(PRINT_DOC_KEY, JSON.stringify(useEditorStore.getState().doc));
+  window.open("/print", "_blank");
+}
+
+async function exportPdf() {
+  const doc = useEditorStore.getState().doc;
+  const ok = await downloadPdf(doc);
+  // No API (or no Chrome on the server): fall back to the browser's own
+  // "save as PDF" from the print view.
+  if (!ok) openPrintView();
+}
 
 function ToolButton({
   label,
@@ -43,6 +61,7 @@ export function Toolbar() {
   const tool = useEditorStore((s) => s.tool);
   const theme = useEditorStore((s) => s.theme);
   const selection = useEditorStore((s) => s.selection);
+  const [exporting, setExporting] = useState(false);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const hasSelection = selection.length > 0;
@@ -115,11 +134,19 @@ export function Toolbar() {
         />
         <button
           type="button"
-          title="PDF export arrives in M2"
-          onClick={() => alert("PDF export is coming in milestone M2.")}
-          className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+          title="Download this rider as a PDF"
+          disabled={exporting}
+          onClick={async () => {
+            setExporting(true);
+            try {
+              await exportPdf();
+            } finally {
+              setExporting(false);
+            }
+          }}
+          className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500 disabled:cursor-wait disabled:opacity-60"
         >
-          Export PDF
+          {exporting ? "Rendering…" : "Export PDF"}
         </button>
       </div>
     </header>

@@ -1,0 +1,280 @@
+/* The rider sheet. Deliberately self-contained: it must look the same on
+   screen, in the browser print dialog and in headless Chrome. */
+
+html,
+body,
+#root {
+  background: #52525b;
+}
+
+.print-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 24px 48px;
+}
+
+.print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 297mm;
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #18181b;
+  color: #f4f4f5;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.print-toolbar-title {
+  margin-right: auto;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-toolbar button {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: #0ea5e9;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.print-toolbar button.ghost {
+  background: #3f3f46;
+}
+
+.print-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.print-error {
+  color: #f4f4f5;
+  font: 14px system-ui, sans-serif;
+}
+
+.share-brand {
+  margin-left: 4px;
+  color: #a1a1aa;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.share-brand:hover {
+  color: #e4e4e7;
+}
+
+.share-error {
+  max-width: 420px;
+  margin-top: 48px;
+  padding: 24px;
+  border-radius: 10px;
+  background: #fff;
+  color: #111827;
+  text-align: center;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+
+.share-error h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.share-error p {
+  margin: 0 0 14px;
+  color: #4b5563;
+}
+
+.share-error a {
+  color: #0284c7;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.print-sheet {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4mm;
+  width: 297mm;
+  height: 210mm;
+  padding: 10mm;
+  background: #fff;
+  color: #111827;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.print-sheet.portrait {
+  width: 210mm;
+  height: 297mm;
+}
+
+.print-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8mm;
+  border-bottom: 1.5px solid #111827;
+  padding-bottom: 2mm;
+}
+
+.print-head h1 {
+  margin: 0;
+  font-size: 18pt;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.print-kicker {
+  margin: 1mm 0 0;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.print-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6mm;
+  font-size: 7.5pt;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.print-stage {
+  flex: 1 1 auto;
+  min-height: 55mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.print-stage-svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+.print-block {
+  flex: 0 0 auto;
+}
+
+.print-block h2 {
+  margin: 0 0 1.5mm;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 8pt;
+}
+
+.print-table.narrow {
+  width: 55%;
+}
+
+.print-table th,
+.print-table td {
+  border: 0.5px solid #d1d5db;
+  padding: 1mm 1.4mm;
+  text-align: left;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-table th {
+  background: #f3f4f6;
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.print-table td.num,
+.print-table th.num {
+  width: 8mm;
+  text-align: center;
+  color: #4b5563;
+}
+
+.print-table td {
+  height: 4.6mm;
+}
+
+.print-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.print-empty {
+  margin: 0;
+  font-size: 8pt;
+  color: #6b7280;
+}
+
+.print-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6mm;
+  border-top: 0.5px solid #d1d5db;
+  padding-top: 2mm;
+  font-size: 8pt;
+  color: #374151;
+}
+
+.print-foot p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.print-sign {
+  flex: 0 0 auto;
+  font-size: 7pt;
+  color: #9ca3af;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    background: #fff;
+  }
+
+  .print-page {
+    padding: 0;
+  }
+
+  .print-toolbar {
+    display: none;
+  }
+
+  .print-sheet {
+    box-shadow: none;
+  }
+}
