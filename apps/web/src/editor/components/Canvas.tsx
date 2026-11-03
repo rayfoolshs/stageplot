@@ -1,10 +1,27 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useRef } from "react";
-import type { StageItem, TextItem } from "@stageplot/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ShapeItem, StageItem, TextItem } from "@stageplot/shared";
 import { getLibraryItem } from "../library";
 import { useEditorStore } from "../store";
 
 const MIN_SIZE = 12;
+const SHAPE_STROKE = "#a78bfa";
+const SHAPE_STROKE_SELECTED = "#c4b5fd";
+const SHAPE_FILL = "rgba(167,139,250,0.18)";
+
+/** Drop focus from an inspector field so keyboard shortcuts act on the canvas. */
+function blurActiveField() {
+  const el = document.activeElement as HTMLElement | null;
+  if (
+    el &&
+    (el.tagName === "INPUT" ||
+      el.tagName === "TEXTAREA" ||
+      el.tagName === "SELECT" ||
+      el.isContentEditable)
+  ) {
+    el.blur();
+  }
+}
 
 /** Attach window-level pointer listeners for the duration of a drag. */
 function beginPointerDrag(
@@ -25,12 +42,36 @@ function beginPointerDrag(
   window.addEventListener("pointerup", up);
 }
 
+function normalizeBox(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+) {
+  return {
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    w: Math.abs(a.x - b.x),
+    h: Math.abs(a.y - b.y),
+  };
+}
+
 export function Canvas() {
   const doc = useEditorStore((s) => s.doc);
   const scale = useEditorStore((s) => s.scale);
   const showGrid = useEditorStore((s) => s.showGrid);
+  const showLabels = useEditorStore((s) => s.showLabels);
   const selection = useEditorStore((s) => s.selection);
+  const tool = useEditorStore((s) => s.tool);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  const [draftRect, setDraftRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [polyPoints, setPolyPoints] = useState<{ x: number; y: number }[]>([]);
+  const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
+  // Mirror of polyPoints for logic — never run side effects inside a state updater.
+  const polyRef = useRef<{ x: number; y: number }[]>([]);
+  const updatePoly = useCallback((next: { x: number; y: number }[]) => {
+    polyRef.current = next;
+    setPolyPoints(next);
+  }, []);
 
   const toStage = useCallback(
     (clientX: number, clientY: number) => {
@@ -40,16 +81,95 @@ export function Canvas() {
     [scale],
   );
 
+  const finishPolygon = useCallback(() => {
+    const pts = polyRef.current;
+    if (pts.length >= 3) useEditorStore.getState().addPolygon(pts);
+    polyRef.current = [];
+    setPolyPoints([]);
+    useEditorStore.getState().setTool("select");
+  }, []);
+
+  const cancelPolygon = useCallback(() => {
+    polyRef.current = [];
+    setPolyPoints([]);
+    useEditorStore.getState().setTool("select");
+  }, []);
+
+  // Reset polygon draft when leaving the polygon tool.
+  useEffect(() => {
+    if (tool !== "polygon") {
+      polyRef.current = [];
+      setPolyPoints([]);
+    }
+  }, [tool]);
+
+  // Enter finishes, Escape cancels, while drawing a polygon.
+  useEffect(() => {
+    if (tool !== "polygon") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") finishPolygon();
+      else if (e.key === "Escape") cancelPolygon();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tool, finishPolygon, cancelPolygon]);
+
   const { width, height } = doc.stage;
   const cell = 25 * scale;
+  const interactive = tool === "select";
+
+  const onStagePointerDown = (e: ReactPointerEvent) => {
+    blurActiveField();
+    if (tool === "select") {
+      if (e.target === e.currentTarget) useEditorStore.getState().clearSelection();
+      return;
+    }
+    if (tool === "polygon") {
+      const p = toStage(e.clientX, e.clientY);
+      const prev = polyRef.current;
+      if (
+        prev.length >= 3 &&
+        Math.hypot(p.x - prev[0].x, p.y - prev[0].y) * scale < 12
+      ) {
+        finishPolygon();
+        return;
+      }
+      updatePoly([...prev, p]);
+      return;
+    }
+    // rect / ellipse: drag out a box
+    const start = toStage(e.clientX, e.clientY);
+    let cur = start;
+    setDraftRect(normalizeBox(start, cur));
+    const move = (ev: PointerEvent) => {
+      cur = toStage(ev.clientX, ev.clientY);
+      setDraftRect(normalizeBox(start, cur));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      const box = normalizeBox(start, cur);
+      if (box.w > 4 && box.h > 4) {
+        useEditorStore.getState().addShapeFromDrag(tool, box.x, box.y, box.w, box.h);
+      }
+      setDraftRect(null);
+      useEditorStore.getState().setTool("select");
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
 
   return (
     <div className="h-full w-full overflow-auto bg-neutral-950 p-8">
       <div
         ref={stageRef}
         data-stage
-        onPointerDown={(e) => {
-          if (e.target === e.currentTarget) useEditorStore.getState().clearSelection();
+        onPointerDown={onStagePointerDown}
+        onPointerMove={(e) => {
+          if (tool === "polygon") setHover(toStage(e.clientX, e.clientY));
+        }}
+        onDoubleClick={() => {
+          if (tool === "polygon") finishPolygon();
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -67,45 +187,357 @@ export function Canvas() {
         style={{
           width: width * scale,
           height: height * scale,
+          cursor: interactive ? "default" : "crosshair",
           backgroundImage: showGrid
-            ? "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)"
+            ? "linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)"
             : undefined,
           backgroundSize: showGrid ? `${cell}px ${cell}px` : undefined,
         }}
       >
-        {doc.items.map((item) => (
-          <StageItemNode
-            key={item.id}
-            item={item}
-            scale={scale}
-            selected={selection.includes(item.id)}
+        <div className="pointer-events-none absolute inset-0">
+          {doc.shapes.map((shape) => (
+            <ShapeNode
+              key={shape.id}
+              shape={shape}
+              scale={scale}
+              selected={selection.includes(shape.id)}
+              enabled={interactive}
+              toStage={toStage}
+            />
+          ))}
+          {doc.items.map((item) => (
+            <StageItemNode
+              key={item.id}
+              item={item}
+              scale={scale}
+              selected={selection.includes(item.id)}
+              enabled={interactive}
+            />
+          ))}
+          {doc.texts.map((text) => (
+            <TextNode
+              key={text.id}
+              text={text}
+              scale={scale}
+              selected={selection.includes(text.id)}
+              enabled={interactive}
+            />
+          ))}
+          {showLabels &&
+            doc.items.map((item) => {
+              if (!item.label) return null;
+              return (
+                <div
+                  key={`label-${item.id}`}
+                  className="absolute -translate-x-1/2 text-center"
+                  style={{
+                    left: (item.x + item.w / 2) * scale,
+                    top: (item.y + item.h) * scale + 2,
+                    fontSize: Math.max(8, 12 * scale),
+                    color: selection.includes(item.id) ? "#7dd3fc" : "#cbd5e1",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span className="rounded bg-neutral-900/75 px-1 leading-tight">{item.label}</span>
+                </div>
+              );
+            })}
+          {showLabels &&
+            doc.shapes.map((shape) => {
+              if (!shape.label) return null;
+              return (
+                <div
+                  key={`slabel-${shape.id}`}
+                  className="absolute -translate-x-1/2 text-center"
+                  style={{
+                    left: (shape.x + shape.w / 2) * scale,
+                    top: (shape.y + shape.h) * scale + 2,
+                    fontSize: Math.max(8, 12 * scale),
+                    color: selection.includes(shape.id) ? "#c4b5fd" : "#cbd5e1",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span className="rounded bg-neutral-900/75 px-1 leading-tight">{shape.label}</span>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* draft previews */}
+        {draftRect && (
+          <div
+            className="pointer-events-none absolute border-2 border-dashed border-violet-400"
+            style={{
+              left: draftRect.x * scale,
+              top: draftRect.y * scale,
+              width: draftRect.w * scale,
+              height: draftRect.h * scale,
+              borderRadius: tool === "ellipse" ? "50%" : 0,
+            }}
           />
-        ))}
-        {doc.texts.map((text) => (
-          <TextNode
-            key={text.id}
-            text={text}
-            scale={scale}
-            selected={selection.includes(text.id)}
-          />
-        ))}
+        )}
+        {tool === "polygon" && polyPoints.length > 0 && (
+          <svg
+            className="pointer-events-none absolute inset-0"
+            width={width * scale}
+            height={height * scale}
+            viewBox={`0 0 ${width} ${height}`}
+          >
+            <polyline
+              points={[
+                ...polyPoints.map((p) => `${p.x},${p.y}`),
+                ...(hover ? [`${hover.x},${hover.y}`] : []),
+              ].join(" ")}
+              fill="rgba(167,139,250,0.12)"
+              stroke="#a78bfa"
+              strokeWidth={2}
+              strokeDasharray="6 4"
+            />
+            {polyPoints.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={4} fill="#c4b5fd" />
+            ))}
+          </svg>
+        )}
       </div>
     </div>
   );
 }
 
+/* --- shape ----------------------------------------------------------------- */
+
+function ShapeNode({
+  shape,
+  scale,
+  selected,
+  enabled,
+  toStage,
+}: {
+  shape: ShapeItem;
+  scale: number;
+  selected: boolean;
+  enabled: boolean;
+  toStage: (clientX: number, clientY: number) => { x: number; y: number };
+}) {
+  const startMove = (e: ReactPointerEvent) => {
+    blurActiveField();
+    const store = useEditorStore.getState();
+    if (e.shiftKey) store.toggleSelection(shape.id, true);
+    else if (!store.selection.includes(shape.id)) store.setSelection([shape.id]);
+    store.pushHistory();
+    const ids = useEditorStore.getState().selection;
+    const start = new Map<string, { x: number; y: number }>();
+    for (const el of useEditorStore.getState().doc.shapes) {
+      if (ids.includes(el.id)) start.set(el.id, { x: el.x, y: el.y });
+    }
+    for (const el of useEditorStore.getState().doc.items) {
+      if (ids.includes(el.id)) start.set(el.id, { x: el.x, y: el.y });
+    }
+    for (const el of useEditorStore.getState().doc.texts) {
+      if (ids.includes(el.id)) start.set(el.id, { x: el.x, y: el.y });
+    }
+    beginPointerDrag(e, (dx, dy) => {
+      const s = useEditorStore.getState();
+      for (const [id, pos] of start) {
+        const patch = { x: pos.x + dx / scale, y: pos.y + dy / scale };
+        if (s.doc.shapes.some((sh) => sh.id === id)) s.updateShape(id, patch);
+        else if (s.doc.items.some((i) => i.id === id)) s.updateItem(id, patch);
+        else s.updateText(id, patch);
+      }
+    });
+  };
+
+  const stroke = selected ? SHAPE_STROKE_SELECTED : SHAPE_STROKE;
+  const fill = shape.fill ? SHAPE_FILL : "none";
+
+  const polyAttr = useMemo(() => {
+    const pts = shape.points ?? [];
+    const out: string[] = [];
+    for (let i = 0; i < pts.length; i += 2) {
+      out.push(`${pts[i] * shape.w},${pts[i + 1] * shape.h}`);
+    }
+    return out.join(" ");
+  }, [shape.points, shape.w, shape.h]);
+
+  // vertex handles live in unrotated local space
+  const cx = shape.x + shape.w / 2;
+  const cy = shape.y + shape.h / 2;
+  const rad = (shape.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const moveVertex = (index: number, e: ReactPointerEvent) => {
+    const store = useEditorStore.getState();
+    store.pushHistory();
+    beginPointerDrag(e, (_dx, _dy, clientX, clientY) => {
+      const p = toStage(clientX, clientY);
+      const ddx = p.x - cx;
+      const ddy = p.y - cy;
+      // rotate pointer back into local space
+      const lx = cx + ddx * cos + ddy * sin;
+      const ly = cy - ddx * sin + ddy * cos;
+      const nx = Math.min(1, Math.max(0, (lx - shape.x) / shape.w));
+      const ny = Math.min(1, Math.max(0, (ly - shape.y) / shape.h));
+      const pts = [...(shape.points ?? [])];
+      pts[index * 2] = nx;
+      pts[index * 2 + 1] = ny;
+      useEditorStore.getState().updateShape(shape.id, { points: pts });
+    });
+  };
+
+  return (
+    <div
+      className={selected ? "absolute outline outline-2 outline-violet-400" : "absolute"}
+      style={{
+        left: shape.x * scale,
+        top: shape.y * scale,
+        width: shape.w * scale,
+        height: shape.h * scale,
+        transform: `rotate(${shape.rotation}deg)`,
+        transformOrigin: "center",
+        pointerEvents: enabled ? "auto" : "none",
+      }}
+    >
+      <svg
+        viewBox={`0 0 ${shape.w} ${shape.h}`}
+        width="100%"
+        height="100%"
+        style={{ overflow: "visible", pointerEvents: "none" }}
+      >
+        {shape.kind === "rect" && (
+          <rect
+            x={0}
+            y={0}
+            width={shape.w}
+            height={shape.h}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={3}
+            style={{ pointerEvents: "all", cursor: "move" }}
+            onPointerDown={startMove}
+          />
+        )}
+        {shape.kind === "ellipse" && (
+          <ellipse
+            cx={shape.w / 2}
+            cy={shape.h / 2}
+            rx={shape.w / 2}
+            ry={shape.h / 2}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={3}
+            style={{ pointerEvents: "all", cursor: "move" }}
+            onPointerDown={startMove}
+          />
+        )}
+        {shape.kind === "polygon" && (
+          <polygon
+            points={polyAttr}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={3}
+            style={{ pointerEvents: "all", cursor: "move" }}
+            onPointerDown={startMove}
+          />
+        )}
+      </svg>
+
+      {selected && enabled && (
+        <>
+          <button
+            type="button"
+            aria-label="Rotate shape"
+            onPointerDown={(e) => {
+              const store = useEditorStore.getState();
+              store.pushHistory();
+              const startRotation = shape.rotation;
+              const rect = (e.currentTarget as HTMLElement)
+                .closest("[data-stage]")!
+                .getBoundingClientRect();
+              const ccx = rect.left + cx * scale;
+              const ccy = rect.top + cy * scale;
+              const startAngle = (Math.atan2(e.clientY - ccy, e.clientX - ccx) * 180) / Math.PI;
+              beginPointerDrag(e, (_dx, _dy, clientX, clientY) => {
+                const angle = (Math.atan2(clientY - ccy, clientX - ccx) * 180) / Math.PI;
+                useEditorStore.getState().updateShape(shape.id, {
+                  rotation: startRotation + (angle - startAngle),
+                });
+              });
+            }}
+            style={{ pointerEvents: "auto" }}
+            className="absolute -top-7 left-1/2 h-4 w-4 -translate-x-1/2 cursor-grab rounded-full border border-violet-300 bg-violet-500/80"
+          />
+          <button
+            type="button"
+            aria-label="Resize shape"
+            onPointerDown={(e) => {
+              const store = useEditorStore.getState();
+              store.pushHistory();
+              const startW = shape.w;
+              const startH = shape.h;
+              beginPointerDrag(e, (dx, dy) => {
+                useEditorStore.getState().updateShape(shape.id, {
+                  w: Math.max(MIN_SIZE, startW + dx / scale),
+                  h: Math.max(MIN_SIZE, startH + dy / scale),
+                });
+              });
+            }}
+            style={{ pointerEvents: "auto" }}
+            className="absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-sm border border-violet-300 bg-violet-500/80"
+          />
+        </>
+      )}
+
+      {selected && enabled && shape.kind === "polygon" && shape.points && (
+        <svg
+          className="absolute inset-0"
+          width={shape.w * scale}
+          height={shape.h * scale}
+          style={{ overflow: "visible", pointerEvents: "none" }}
+        >
+          {Array.from({ length: shape.points.length / 2 }).map((_, i) => {
+            const lx = shape.points![i * 2] * shape.w;
+            const ly = shape.points![i * 2 + 1] * shape.h;
+            const ddx = lx - shape.w / 2;
+            const ddy = ly - shape.h / 2;
+            const rx = shape.w / 2 + ddx * cos - ddy * sin;
+            const ry = shape.h / 2 + ddx * sin + ddy * cos;
+            return (
+              <circle
+                key={i}
+                cx={rx * scale}
+                cy={ry * scale}
+                r={6}
+                fill="#c4b5fd"
+                stroke="#312e81"
+                strokeWidth={1.5}
+                style={{ pointerEvents: "all", cursor: "pointer" }}
+                onPointerDown={(e) => moveVertex(i, e)}
+              />
+            );
+          })}
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/* --- library item ---------------------------------------------------------- */
+
 function StageItemNode({
   item,
   scale,
   selected,
+  enabled,
 }: {
   item: StageItem;
   scale: number;
   selected: boolean;
+  enabled: boolean;
 }) {
   const lib = getLibraryItem(item.itemKey);
 
   const startMove = (e: ReactPointerEvent) => {
+    blurActiveField();
     const store = useEditorStore.getState();
     if (e.shiftKey) {
       store.toggleSelection(item.id, true);
@@ -121,12 +553,16 @@ function StageItemNode({
     for (const el of useEditorStore.getState().doc.texts) {
       if (ids.includes(el.id)) start.set(el.id, { x: el.x, y: el.y });
     }
+    for (const el of useEditorStore.getState().doc.shapes) {
+      if (ids.includes(el.id)) start.set(el.id, { x: el.x, y: el.y });
+    }
     beginPointerDrag(e, (dx, dy) => {
       const s = useEditorStore.getState();
       for (const [id, pos] of start) {
         const patch = { x: pos.x + dx / scale, y: pos.y + dy / scale };
         if (s.doc.items.some((i) => i.id === id)) s.updateItem(id, patch);
-        else s.updateText(id, patch);
+        else if (s.doc.texts.some((t) => t.id === id)) s.updateText(id, patch);
+        else s.updateShape(id, patch);
       }
     });
   };
@@ -150,17 +586,15 @@ function StageItemNode({
         })`,
         transformOrigin: "center",
         color: selected ? "#7dd3fc" : "#cbd5e1",
+        pointerEvents: enabled ? "auto" : "none",
       }}
     >
       <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
         <Icon />
       </svg>
-      {selected && (
+      {selected && enabled && (
         <SelectionHandles
-          item={item}
-          scale={scale}
-          onResize={(__e: ReactPointerEvent) => {
-            const e = __e;
+          onResize={(e) => {
             const store = useEditorStore.getState();
             store.pushHistory();
             const startW = item.w;
@@ -172,8 +606,7 @@ function StageItemNode({
               });
             });
           }}
-          onRotate={(__e: ReactPointerEvent) => {
-            const e = __e;
+          onRotate={(e) => {
             const store = useEditorStore.getState();
             store.pushHistory();
             const startRotation = item.rotation;
@@ -182,11 +615,9 @@ function StageItemNode({
               .getBoundingClientRect();
             const cx = rect.left + (item.x + item.w / 2) * scale;
             const cy = rect.top + (item.y + item.h / 2) * scale;
-            const startAngle =
-              (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI;
+            const startAngle = (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI;
             beginPointerDrag(e, (_dx, _dy, clientX, clientY) => {
-              const angle =
-                (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+              const angle = (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
               useEditorStore
                 .getState()
                 .updateItem(item.id, { rotation: startRotation + (angle - startAngle) });
@@ -202,12 +633,15 @@ function TextNode({
   text,
   scale,
   selected,
+  enabled,
 }: {
   text: TextItem;
   scale: number;
   selected: boolean;
+  enabled: boolean;
 }) {
   const startMove = (e: ReactPointerEvent) => {
+    blurActiveField();
     const store = useEditorStore.getState();
     if (e.shiftKey) store.toggleSelection(text.id, true);
     else if (!store.selection.includes(text.id)) store.setSelection([text.id]);
@@ -236,6 +670,7 @@ function TextNode({
         transformOrigin: "center",
         color: selected ? "#7dd3fc" : "#e2e8f0",
         whiteSpace: "nowrap",
+        pointerEvents: enabled ? "auto" : "none",
       }}
     >
       {text.text || "Text"}
@@ -244,30 +679,26 @@ function TextNode({
 }
 
 function SelectionHandles({
-  item,
-  scale,
   onResize,
   onRotate,
 }: {
-  item: StageItem;
-  scale: number;
   onResize: (e: ReactPointerEvent) => void;
   onRotate: (e: ReactPointerEvent) => void;
 }) {
-  void scale;
-  void item;
   return (
     <>
       <button
         type="button"
         aria-label="Rotate"
         onPointerDown={onRotate}
+        style={{ pointerEvents: "auto" }}
         className="absolute -top-7 left-1/2 h-4 w-4 -translate-x-1/2 cursor-grab rounded-full border border-sky-300 bg-sky-500/80"
       />
       <button
         type="button"
         aria-label="Resize"
         onPointerDown={onResize}
+        style={{ pointerEvents: "auto" }}
         className="absolute -bottom-2 -right-2 h-4 w-4 cursor-nwse-resize rounded-sm border border-sky-300 bg-sky-500/80"
       />
     </>

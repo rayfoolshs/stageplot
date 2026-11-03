@@ -7,10 +7,22 @@ import { initialDoc, saveDraft } from "../persistence";
 import { useEditorStore } from "../store";
 
 export function Editor() {
+  const theme = useEditorStore((s) => s.theme);
+
   // Load the draft once on mount.
   useEffect(() => {
     useEditorStore.getState().setDoc(initialDoc());
+    const savedTheme = localStorage.getItem("stageplot:theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      useEditorStore.getState().setTheme(savedTheme);
+    }
   }, []);
+
+  // Apply + persist the theme.
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme === "light");
+    localStorage.setItem("stageplot:theme", theme);
+  }, [theme]);
 
   // Debounced autosave to localStorage whenever the document changes.
   useEffect(() => {

@@ -1,6 +1,6 @@
 import type { Orientation } from "@stageplot/shared";
 import { getLibraryItem } from "../library";
-import { useEditorStore } from "../store";
+import { useEditorStore, useSelectedShape } from "../store";
 import { ChannelTable } from "./ChannelTable";
 
 const field =
@@ -15,6 +15,7 @@ export function InspectorPanel() {
   const text = useEditorStore((s) =>
     s.doc.texts.find((t) => t.id === s.selection[0]),
   );
+  const shape = useSelectedShape();
   const name = useEditorStore((s) => s.doc.meta.name);
   const orientation = useEditorStore((s) => s.doc.meta.orientation);
   const footer = useEditorStore((s) => s.doc.footer.text);
@@ -24,10 +25,10 @@ export function InspectorPanel() {
 
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-4 overflow-auto border-l border-neutral-800 bg-neutral-900 p-3">
-      {single && (item || text) && (
+      {single && (item || text || shape) && (
         <section className="space-y-2">
           <h2 className="text-xs font-semibold text-neutral-300">
-            {item ? lib?.label ?? "Item" : "Text"}
+            {item ? lib?.label ?? "Item" : text ? "Text" : "Shape"}
           </h2>
 
           {item && (
@@ -127,6 +128,65 @@ export function InspectorPanel() {
                 value={text.y}
                 onChange={(v) => useEditorStore.getState().updateText(text.id, { y: v })}
               />
+            </div>
+          )}
+
+          {shape && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="col-span-2 flex items-center justify-between">
+                <span className="text-xs capitalize text-neutral-400">{shape.kind}</span>
+                <label className="flex items-center gap-1 text-xs text-neutral-300">
+                  <input
+                    type="checkbox"
+                    checked={shape.fill}
+                    onChange={(e) =>
+                      useEditorStore.getState().updateShape(shape.id, { fill: e.target.checked })
+                    }
+                  />
+                  Filled
+                </label>
+              </div>
+              <NumberField
+                label="X"
+                value={shape.x}
+                onChange={(v) => useEditorStore.getState().updateShape(shape.id, { x: v })}
+              />
+              <NumberField
+                label="Y"
+                value={shape.y}
+                onChange={(v) => useEditorStore.getState().updateShape(shape.id, { y: v })}
+              />
+              <NumberField
+                label="W"
+                value={shape.w}
+                onChange={(v) => useEditorStore.getState().updateShape(shape.id, { w: Math.max(6, v) })}
+              />
+              <NumberField
+                label="H"
+                value={shape.h}
+                onChange={(v) => useEditorStore.getState().updateShape(shape.id, { h: Math.max(6, v) })}
+              />
+              <NumberField
+                label="Rotation"
+                value={shape.rotation}
+                onChange={(v) => useEditorStore.getState().updateShape(shape.id, { rotation: v })}
+              />
+              <div className="col-span-2">
+                <label className={label}>Label</label>
+                <input
+                  className={field}
+                  value={shape.label ?? ""}
+                  placeholder="Optional caption"
+                  onChange={(e) =>
+                    useEditorStore.getState().updateShape(shape.id, { label: e.target.value })
+                  }
+                />
+              </div>
+              {shape.kind === "polygon" && (
+                <p className="col-span-2 text-[10px] text-neutral-500">
+                  Drag the dots on the canvas to edit vertices.
+                </p>
+              )}
             </div>
           )}
         </section>

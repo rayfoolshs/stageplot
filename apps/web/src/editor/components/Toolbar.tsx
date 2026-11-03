@@ -37,6 +37,9 @@ const Divider = () => <span className="mx-1 h-5 w-px bg-neutral-800" />;
 export function Toolbar() {
   const scale = useEditorStore((s) => s.scale);
   const showGrid = useEditorStore((s) => s.showGrid);
+  const showLabels = useEditorStore((s) => s.showLabels);
+  const tool = useEditorStore((s) => s.tool);
+  const theme = useEditorStore((s) => s.theme);
   const selection = useEditorStore((s) => s.selection);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
@@ -50,6 +53,13 @@ export function Toolbar() {
 
       <ToolButton label="↶" title="Undo (Ctrl+Z)" onClick={() => store.getState().undo()} disabled={!canUndo} />
       <ToolButton label="↷" title="Redo (Ctrl+Shift+Z)" onClick={() => store.getState().redo()} disabled={!canRedo} />
+
+      <Divider />
+
+      <ToolButton label="Select" title="Select / move" active={tool === "select"} onClick={() => store.getState().setTool("select")} />
+      <ToolButton label="Rect" title="Draw a rectangle" active={tool === "rect"} onClick={() => store.getState().setTool("rect")} />
+      <ToolButton label="Circle" title="Draw a circle / ellipse" active={tool === "ellipse"} onClick={() => store.getState().setTool("ellipse")} />
+      <ToolButton label="Polygon" title="Draw a polygon — click points, Enter or double-click to finish" active={tool === "polygon"} onClick={() => store.getState().setTool("polygon")} />
 
       <Divider />
 
@@ -84,8 +94,14 @@ export function Toolbar() {
       <span className="w-12 text-center text-xs text-neutral-400">{Math.round(scale * 100)}%</span>
       <ToolButton label="+" title="Zoom in" onClick={() => store.getState().setScale(scale + 0.1)} />
       <ToolButton label="Grid" title="Toggle grid" active={showGrid} onClick={() => store.getState().toggleGrid()} />
+      <ToolButton label="Labels" title="Show / hide item labels" active={showLabels} onClick={() => store.getState().toggleLabels()} />
 
       <div className="ml-auto flex items-center gap-1">
+        <ToolButton
+          label={theme === "dark" ? "☾" : "☀"}
+          title="Toggle light / dark mode"
+          onClick={() => store.getState().toggleTheme()}
+        />
         <ToolButton
           label="New"
           title="Start a new rider"

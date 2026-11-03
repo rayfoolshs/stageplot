@@ -304,13 +304,14 @@ Autosave: debounce PUT `/api/riders/:id` ~1.5s after edits.
 - [x] Vite React + TS app boots; Fastify + Prisma + SQLite connects
 - [x] Typecheck + build scripts at the workspace root
 
-### M1 — Editor core (no backend) ✅ (done)
-- [x] Static item library (19 items) with our own SVGs across categories
+### M1 — Editor core (no backend) ✅ (done, plus extras in §15)
+- [x] Item library (43 items across 11 categories) with our own SVGs
 - [x] Canvas: drop, select, move, resize, rotate, flip, layer
 - [x] Zustand store with undo/redo (JSON deep-clone snapshots)
 - [x] Channel list + output list tables
 - [x] Footer / orientation controls
 - [x] Save/load doc to localStorage (debounced autosave)
+- [x] Drawing tools (rect / circle / polygon) + item labels + light/dark theme
 
 ### M2 — PDF export
 - [ ] `/print` read-only render route
@@ -383,7 +384,63 @@ stageplot/
 
 ---
 
-## 15. Immediate next step after approval
+## 15. Delivered beyond the original plan
 
-Scaffold **M0**: monorepo, shared `StageDoc` types, booting web + api, and a
-skeleton editor route — then move into M1.
+These landed after M1 (all in `apps/web`):
+
+### 15.1 Item library expansion
+43 items across 11 categories (added a **Lighting** category). Clean, top-down
+artwork with a shared stroke language; icons tint to the selection color.
+
+### 15.2 Item labels
+Items carry a caption (defaults to the library name) rendered under the item on
+the canvas. Toggle all labels from the toolbar; edit per item in the inspector.
+
+### 15.3 Drawing tools (shapes)
+- Tools: **Select / Rect / Circle (ellipse) / Polygon**.
+- Rect & ellipse: drag out a box; polygon: click vertices, then **Enter**,
+  **double-click**, or click near the first point to close; **Esc** cancels.
+- Editing: select, move, resize (corner), rotate; **polygon vertex handles**;
+  filled / outline toggle; optional label; delete.
+- Model: `ShapeItem` on `StageDoc.shapes`. Polygon vertices are stored
+  **normalized inside the bounding box**, so resizing the box scales the shape.
+- Rendering: one SVG per shape in stage units, violet accent to distinguish
+  shapes from equipment.
+
+### 15.4 Light / dark theme
+Toolbar toggle (☾/☀), persisted to `localStorage`. Implemented by remapping
+Tailwind's `neutral` palette variables under `html.light`, so the entire UI
+remaps with no per-component rewrites.
+
+### 15.5 Fixes
+- Delete / Backspace removes the selected item / text / shape.
+- Canvas gestures blur a focused inspector field so shortcuts act on the canvas.
+- Fixed a Strict Mode double-invoke bug: a side effect inside a `setState`
+  updater created **two** polygons per Enter press.
+
+### Known dev caveat
+Editing the store module while the dev server runs can leave the global keyboard
+listener bound to a stale store instance. Hard-refresh (Ctrl+Shift+R) after
+pulling changes.
+
+## 16. Roadmap (remaining)
+
+| # | Milestone | Output |
+|---|---|---|
+| M2 | PDF export | `/print` route + Puppeteer render endpoint |
+| M3 | Accounts | register/login/session, hashing, CSRF, rate limiting |
+| M4 | Cloud save | rider CRUD, autosave, thumbnails, "My riders", image uploads |
+| M5 | Sharing | share tokens, public read-only view, favorites |
+| M6 | Polish | marquee multi-select, snapping, states, Playwright e2e |
+
+Potential follow-ups to the new features (not yet planned in detail):
+custom shape colors / line width, template starters, arrow/connector tool,
+and richer icon set (lighting fixtures, drum sub-pieces).
+
+## 17. How to run
+
+```powershell
+cd C:\Users\MusicDept\Downloads\stageplot
+npm.cmd run dev:api     # http://127.0.0.1:3001
+npm.cmd run dev:web     # http://localhost:5173  (proxies /api -> api)
+```

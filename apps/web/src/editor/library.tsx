@@ -285,28 +285,343 @@ const Riser: Icon = () => (
   </g>
 );
 
+/* --- more drums ---------------------------------------------------------- */
+
+const HiHat: Icon = () => (
+  <g {...S}>
+    <circle cx="50" cy="50" r="35" {...FILL} />
+    <circle cx="50" cy="50" r="29" />
+    <circle cx="50" cy="50" r="5" {...SOLID} />
+  </g>
+);
+
+const KickDrum: Icon = () => (
+  <g {...S}>
+    <circle cx="50" cy="42" r="30" {...FILL} />
+    <circle cx="50" cy="42" r="24" />
+    <circle cx="50" cy="42" r="6" {...SOLID} />
+    <rect x="41" y="72" width="18" height="18" rx="4" {...FILL} />
+  </g>
+);
+
+const Congas: Icon = () => (
+  <g {...S}>
+    <circle cx="33" cy="40" r="17" {...FILL} />
+    <circle cx="33" cy="40" r="12" />
+    <circle cx="67" cy="48" r="15" {...FILL} />
+    <circle cx="67" cy="48" r="10" />
+    <circle cx="40" cy="74" r="12" {...FILL} />
+    <circle cx="40" cy="74" r="7" />
+  </g>
+);
+
+const Cajon: Icon = () => (
+  <g {...S}>
+    <rect x="26" y="18" width="48" height="66" rx="5" {...FILL} />
+    <line x1="26" y1="34" x2="74" y2="34" />
+    <circle cx="50" cy="54" r="11" />
+    <circle cx="50" cy="28" r="2.4" {...SOLID} />
+  </g>
+);
+
+/* --- more amps ----------------------------------------------------------- */
+
+const AmpHead: Icon = () => (
+  <g {...S}>
+    <rect x="8" y="32" width="84" height="36" rx="5" {...FILL} />
+    <circle cx="24" cy="50" r="4" />
+    <circle cx="38" cy="50" r="4" />
+    <circle cx="52" cy="50" r="4" />
+    <circle cx="66" cy="50" r="4" />
+    <rect x="74" y="44" width="11" height="12" rx="2" {...SOLID} />
+  </g>
+);
+
+/* --- more keys ----------------------------------------------------------- */
+
+const Piano: Icon = () => (
+  <g {...S}>
+    <rect x="16" y="20" width="68" height="60" rx="4" {...FILL} />
+    <line x1="16" y1="34" x2="84" y2="34" />
+    <rect x="20" y="58" width="60" height="18" rx="2" />
+    <rect x="26" y="58" width="5" height="8" {...SOLID} />
+    <rect x="36" y="58" width="5" height="8" {...SOLID} />
+    <rect x="50" y="58" width="5" height="8" {...SOLID} />
+    <rect x="60" y="58" width="5" height="8" {...SOLID} />
+    <rect x="72" y="58" width="5" height="8" {...SOLID} />
+  </g>
+);
+
+const Synth: Icon = () => (
+  <g {...S}>
+    <rect x="8" y="26" width="84" height="48" rx="4" {...FILL} />
+    <line x1="8" y1="44" x2="92" y2="44" />
+    <circle cx="20" cy="35" r="3" {...SOLID} />
+    <circle cx="34" cy="35" r="3" {...SOLID} />
+    <circle cx="48" cy="35" r="3" {...SOLID} />
+    <circle cx="62" cy="35" r="3" {...SOLID} />
+    <circle cx="76" cy="35" r="3" {...SOLID} />
+    <line x1="25" y1="44" x2="25" y2="74" />
+    <line x1="42" y1="44" x2="42" y2="74" />
+    <line x1="59" y1="44" x2="59" y2="74" />
+    <line x1="76" y1="44" x2="76" y2="74" />
+  </g>
+);
+
+/* --- more guitars / strings ---------------------------------------------- */
+
+const BassGuitar: Icon = () => (
+  <g {...S}>
+    <path
+      d="M50 56 C36 54 26 64 28 76 C30 87 43 89 50 85 C57 89 70 87 72 76 C74 64 64 54 50 56 Z"
+      {...FILL}
+    />
+    <rect x="46" y="14" width="8" height="44" rx="2" />
+    <rect x="42" y="4" width="16" height="12" rx="3" {...FILL} />
+    <circle cx="44" cy="20" r="2.4" {...SOLID} />
+    <circle cx="56" cy="20" r="2.4" {...SOLID} />
+    <rect x="40" y="66" width="20" height="4" rx="1.5" />
+    <rect x="40" y="74" width="20" height="4" rx="1.5" />
+  </g>
+);
+
+const Cello: Icon = () => (
+  <g {...S}>
+    <ellipse cx="50" cy="82" rx="17" ry="13" {...FILL} />
+    <ellipse cx="50" cy="60" rx="11" ry="8" {...FILL} />
+    <path d="M42 74 q-3 4 0 7" />
+    <path d="M58 74 q3 4 0 7" />
+    <rect x="47" y="22" width="6" height="32" rx="2" />
+    <circle cx="50" cy="17" r="5" {...FILL} />
+    <line x1="50" y1="98" x2="50" y2="92" />
+  </g>
+);
+
+/* --- more winds ---------------------------------------------------------- */
+
+const Trumpet: Icon = () => (
+  <g {...S}>
+    <rect x="14" y="46" width="22" height="8" rx="3" {...FILL} />
+    <rect x="34" y="42" width="34" height="16" rx="4" {...FILL} />
+    <rect x="40" y="32" width="6" height="14" rx="2" />
+    <rect x="49" y="30" width="6" height="16" rx="2" />
+    <rect x="58" y="32" width="6" height="14" rx="2" />
+    <path d="M68 38 C86 33 94 40 94 50 C94 60 86 67 68 62 Z" {...FILL} />
+  </g>
+);
+
+const Trombone: Icon = () => (
+  <g {...S}>
+    <rect x="10" y="40" width="60" height="6" rx="3" {...FILL} />
+    <rect x="10" y="54" width="60" height="6" rx="3" {...FILL} />
+    <rect x="20" y="44" width="12" height="12" rx="4" />
+    <path d="M70 34 C88 28 98 38 98 50 C98 62 88 72 70 66 Z" {...FILL} />
+  </g>
+);
+
+/* --- more mics ----------------------------------------------------------- */
+
+const DrumClip: Icon = () => (
+  <g {...S}>
+    <rect x="40" y="24" width="16" height="26" rx="7" {...FILL} />
+    <circle cx="48" cy="32" r="6" />
+    <path d="M40 48 q-12 8 -6 22" />
+    <path d="M56 48 q12 8 6 22" />
+    <line x1="48" y1="58" x2="48" y2="86" />
+  </g>
+);
+
+const OverheadMic: Icon = () => (
+  <g {...S}>
+    <circle cx="10" cy="64" r="5" {...FILL} />
+    <line x1="14" y1="64" x2="62" y2="64" />
+    <line x1="62" y1="64" x2="78" y2="42" />
+    <rect x="72" y="28" width="14" height="18" rx="7" {...FILL} transform="rotate(40 79 37)" />
+  </g>
+);
+
+const WirelessMic: Icon = () => (
+  <g {...S}>
+    <circle cx="38" cy="36" r="14" {...FILL} />
+    <path d="M31 22 v28 M45 20 v32 M24 36 h28" strokeWidth={1.4} />
+    <path d="M29 47 q9 6 18 0 l-3 30 a6 6 0 0 1 -12 0 z" {...FILL} />
+    <path d="M62 28 q10 10 0 20" />
+    <path d="M72 22 q16 16 0 32" />
+  </g>
+);
+
+/* --- more audio ---------------------------------------------------------- */
+
+const Subwoofer: Icon = () => (
+  <g {...S}>
+    <rect x="13" y="20" width="74" height="64" rx="5" {...FILL} />
+    <circle cx="50" cy="52" r="22" {...FILL} />
+    <circle cx="50" cy="52" r="8" />
+    <rect x="24" y="28" width="12" height="6" rx="2" {...SOLID} />
+  </g>
+);
+
+const PaSpeaker: Icon = () => (
+  <g {...S}>
+    <rect x="26" y="12" width="48" height="48" rx="5" {...FILL} />
+    <circle cx="50" cy="30" r="11" />
+    <circle cx="50" cy="48" r="8" />
+    <line x1="50" y1="60" x2="50" y2="80" />
+    <line x1="50" y1="80" x2="34" y2="94" />
+    <line x1="50" y1="80" x2="66" y2="94" />
+  </g>
+);
+
+const Mixer: Icon = () => (
+  <g {...S}>
+    <rect x="8" y="26" width="84" height="52" rx="4" {...FILL} />
+    <circle cx="20" cy="36" r="3" {...SOLID} />
+    <circle cx="32" cy="36" r="3" {...SOLID} />
+    <circle cx="44" cy="36" r="3" {...SOLID} />
+    <circle cx="56" cy="36" r="3" {...SOLID} />
+    <circle cx="68" cy="36" r="3" {...SOLID} />
+    <line x1="20" y1="46" x2="20" y2="68" />
+    <line x1="32" y1="46" x2="32" y2="68" />
+    <line x1="44" y1="46" x2="44" y2="68" />
+    <line x1="56" y1="46" x2="56" y2="68" />
+    <line x1="68" y1="46" x2="68" y2="68" />
+    <rect x="76" y="34" width="12" height="34" rx="2" {...FILL} />
+  </g>
+);
+
+const Headphones: Icon = () => (
+  <g {...S}>
+    <path d="M22 60 v-10 a28 28 0 0 1 56 0 v10" />
+    <rect x="14" y="56" width="15" height="24" rx="7" {...FILL} />
+    <rect x="71" y="56" width="15" height="24" rx="7" {...FILL} />
+  </g>
+);
+
+/* --- more people --------------------------------------------------------- */
+
+const Dj: Icon = () => (
+  <g {...S}>
+    <circle cx="50" cy="36" r="13" {...FILL} />
+    <path d="M26 88 C26 64 36 54 50 54 C64 54 74 64 74 88 Z" {...FILL} />
+    <path d="M30 32 v-3 a20 20 0 0 1 40 0 v3" />
+    <rect x="24" y="28" width="10" height="16" rx="5" {...FILL} />
+    <rect x="66" y="28" width="10" height="16" rx="5" {...FILL} />
+  </g>
+);
+
+/* --- more stage ---------------------------------------------------------- */
+
+const Stairs: Icon = () => (
+  <g {...S}>
+    <rect x="26" y="14" width="48" height="72" rx="3" {...FILL} />
+    <line x1="26" y1="28" x2="74" y2="28" />
+    <line x1="26" y1="42" x2="74" y2="42" />
+    <line x1="26" y1="56" x2="74" y2="56" />
+    <line x1="26" y1="70" x2="74" y2="70" />
+  </g>
+);
+
+const Barricade: Icon = () => (
+  <g {...S}>
+    <line x1="8" y1="38" x2="92" y2="38" />
+    <line x1="8" y1="62" x2="92" y2="62" />
+    <line x1="14" y1="34" x2="14" y2="66" />
+    <line x1="30" y1="34" x2="30" y2="66" />
+    <line x1="46" y1="34" x2="46" y2="66" />
+    <line x1="62" y1="34" x2="62" y2="66" />
+    <line x1="78" y1="34" x2="78" y2="66" />
+    <line x1="92" y1="34" x2="92" y2="66" />
+  </g>
+);
+
+const Backdrop: Icon = () => (
+  <g {...S}>
+    <rect x="6" y="28" width="88" height="44" rx="2" {...FILL} />
+    <path d="M20 28 q4 22 0 44" />
+    <path d="M36 28 q4 22 0 44" />
+    <path d="M52 28 q4 22 0 44" />
+    <path d="M68 28 q4 22 0 44" />
+    <path d="M84 28 q4 22 0 44" />
+  </g>
+);
+
+/* --- lighting ------------------------------------------------------------ */
+
+const ParCan: Icon = () => (
+  <g {...S}>
+    <path d="M36 50 L64 50 L80 92 L20 92 Z" {...SOLID} stroke="none" />
+    <circle cx="50" cy="36" r="18" {...FILL} />
+    <circle cx="50" cy="36" r="9" />
+    <path d="M32 36 a18 18 0 0 0 36 0" />
+  </g>
+);
+
+const MovingHead: Icon = () => (
+  <g {...S}>
+    <path d="M38 46 L62 46 L78 92 L22 92 Z" {...SOLID} stroke="none" />
+    <circle cx="50" cy="40" r="16" {...FILL} />
+    <circle cx="50" cy="40" r="7" />
+    <path d="M34 40 a16 16 0 0 0 32 0" />
+  </g>
+);
+
 /* --- catalog ------------------------------------------------------------- */
 
 export const LIBRARY_ITEMS: LibraryItem[] = [
+  // drums
   { key: "drumset", label: "Drumset (3 toms)", category: "Drums", w: 190, h: 150, Icon: Drumset },
-  { key: "drum", label: "Drum / tom", category: "Drums", w: 90, h: 90, Icon: Drum },
+  { key: "hihat", label: "Hi-hat", category: "Drums", w: 100, h: 100, Icon: HiHat },
+  { key: "kickdrum", label: "Kick drum", category: "Drums", w: 110, h: 110, Icon: KickDrum },
+  { key: "drum", label: "Tom", category: "Drums", w: 90, h: 90, Icon: Drum },
   { key: "cymbal", label: "Cymbal", category: "Drums", w: 100, h: 100, Icon: Cymbal },
+  { key: "congas", label: "Congas / percussion", category: "Drums", w: 110, h: 100, Icon: Congas },
+  { key: "cajon", label: "Cajon", category: "Drums", w: 80, h: 100, Icon: Cajon },
+  // amps
   { key: "amp", label: "Guitar amp", category: "Amps", w: 100, h: 100, Icon: Amp },
   { key: "bassamp", label: "Bass amp", category: "Amps", w: 120, h: 110, Icon: BassAmp },
+  { key: "amphead", label: "Amp head", category: "Amps", w: 120, h: 80, Icon: AmpHead },
+  // keys
   { key: "keyboard", label: "Keyboard", category: "Keys", w: 190, h: 80, Icon: Keyboard },
+  { key: "piano", label: "Piano (upright)", category: "Keys", w: 150, h: 140, Icon: Piano },
+  { key: "synth", label: "Synth", category: "Keys", w: 190, h: 90, Icon: Synth },
+  // guitars
   { key: "guitar", label: "Acoustic guitar", category: "Guitars", w: 70, h: 140, Icon: Guitar },
   { key: "eguitar", label: "Electric guitar", category: "Guitars", w: 70, h: 140, Icon: ElectricGuitar },
-  { key: "violin", label: "Violin / strings", category: "Strings", w: 70, h: 140, Icon: Violin },
-  { key: "sax", label: "Sax / winds", category: "Winds", w: 90, h: 120, Icon: Sax },
+  { key: "bassguitar", label: "Bass guitar", category: "Guitars", w: 70, h: 150, Icon: BassGuitar },
+  // strings
+  { key: "violin", label: "Violin", category: "Strings", w: 70, h: 140, Icon: Violin },
+  { key: "cello", label: "Cello", category: "Strings", w: 70, h: 150, Icon: Cello },
+  // winds
+  { key: "sax", label: "Saxophone", category: "Winds", w: 90, h: 120, Icon: Sax },
+  { key: "trumpet", label: "Trumpet", category: "Winds", w: 130, h: 90, Icon: Trumpet },
+  { key: "trombone", label: "Trombone", category: "Winds", w: 150, h: 90, Icon: Trombone },
+  // mics
   { key: "tripodmic", label: "Mic on tripod", category: "Mics", w: 80, h: 130, Icon: TripodMic },
   { key: "handmic", label: "Handheld mic", category: "Mics", w: 60, h: 120, Icon: HandMic },
+  { key: "drumclip", label: "Drum clip mic", category: "Mics", w: 60, h: 100, Icon: DrumClip },
+  { key: "overheadmic", label: "Overhead mic", category: "Mics", w: 100, h: 90, Icon: OverheadMic },
+  { key: "wirelessmic", label: "Wireless mic", category: "Mics", w: 90, h: 110, Icon: WirelessMic },
+  // audio
   { key: "monitor", label: "Stage monitor", category: "Audio", w: 130, h: 90, Icon: Monitor },
+  { key: "subwoofer", label: "Subwoofer", category: "Audio", w: 130, h: 110, Icon: Subwoofer },
+  { key: "paspeaker", label: "PA speaker", category: "Audio", w: 90, h: 130, Icon: PaSpeaker },
   { key: "dibox", label: "DI box", category: "Audio", w: 80, h: 70, Icon: DiBox },
   { key: "iem", label: "In-ear monitors", category: "Audio", w: 100, h: 80, Icon: IEM },
+  { key: "headphones", label: "Headphones", category: "Audio", w: 110, h: 110, Icon: Headphones },
+  { key: "mixer", label: "Mixer / console", category: "Audio", w: 200, h: 120, Icon: Mixer },
+  // people
   { key: "person", label: "Musician", category: "People", w: 60, h: 110, Icon: Person },
   { key: "singer", label: "Singer", category: "People", w: 90, h: 110, Icon: Singer },
+  { key: "dj", label: "DJ", category: "People", w: 80, h: 110, Icon: Dj },
+  // stages
   { key: "truss", label: "Truss", category: "Stages", w: 220, h: 70, Icon: Truss },
   { key: "riser", label: "Riser", category: "Stages", w: 200, h: 130, Icon: Riser },
+  { key: "stairs", label: "Stairs", category: "Stages", w: 90, h: 130, Icon: Stairs },
+  { key: "barricade", label: "Barricade", category: "Stages", w: 220, h: 70, Icon: Barricade },
+  { key: "backdrop", label: "Backdrop / curtain", category: "Stages", w: 240, h: 110, Icon: Backdrop },
+  // lighting
+  { key: "parcan", label: "Par can", category: "Lighting", w: 120, h: 120, Icon: ParCan },
+  { key: "movinghead", label: "Moving head", category: "Lighting", w: 120, h: 120, Icon: MovingHead },
 ];
 
 export const LIBRARY_BY_KEY: Record<string, LibraryItem> = Object.fromEntries(

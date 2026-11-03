@@ -42,6 +42,29 @@ export const ArrowItemSchema = z.object({
 });
 export type ArrowItem = z.infer<typeof ArrowItemSchema>;
 
+/**
+ * A drawn shape (rectangle, ellipse or free polygon). Polygon vertices are
+ * stored as flat normalized coordinates within the bounding box, so resizing
+ * the box scales the shape.
+ */
+export const ShapeKindSchema = z.enum(["rect", "ellipse", "polygon"]);
+export type ShapeKind = z.infer<typeof ShapeKindSchema>;
+
+export const ShapeItemSchema = z.object({
+  id: z.string(),
+  kind: ShapeKindSchema,
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+  rotation: z.number(),
+  /** flat [x0,y0,x1,y1,...] normalized 0..1 inside the bbox (polygon only) */
+  points: z.array(z.number()).optional(),
+  fill: z.boolean(),
+  label: z.string().optional(),
+});
+export type ShapeItem = z.infer<typeof ShapeItemSchema>;
+
 export const ChannelRowSchema = z.object({
   id: z.string(),
   number: z.number().int(),
@@ -62,6 +85,7 @@ export const StageDocSchema = z.object({
   }),
   items: z.array(StageItemSchema),
   texts: z.array(TextItemSchema),
+  shapes: z.array(ShapeItemSchema).default([]),
   arrows: z.array(ArrowItemSchema),
   channels: z.array(ChannelRowSchema),
   outputs: z.array(ChannelRowSchema),
@@ -82,6 +106,7 @@ export function createEmptyDoc(name = "Untitled rider"): StageDoc {
     stage: { width: DEFAULT_STAGE_WIDTH, height: DEFAULT_STAGE_HEIGHT },
     items: [],
     texts: [],
+    shapes: [],
     arrows: [],
     channels: [],
     outputs: [],
@@ -106,6 +131,7 @@ export const LIBRARY_CATEGORIES = [
   "Audio",
   "People",
   "Stages",
+  "Lighting",
   "Text",
 ] as const;
 export type LibraryCategory = (typeof LIBRARY_CATEGORIES)[number];

@@ -3,6 +3,8 @@ import { immer } from "zustand/middleware/immer";
 import {
   createEmptyDoc,
   type ChannelRow,
+  type ShapeItem,
+  type ShapeKind,
   type StageDoc,
   type StageItem,
   type TextItem,
@@ -10,6 +12,8 @@ import {
 import { getLibraryItem, type LibraryItem } from "./library";
 
 export type ListKind = "channels" | "outputs";
+export type DrawTool = "select" | ShapeKind;
+export type Theme = "dark" | "light";
 
 let idCounter = 0;
 export function newId(prefix = "el"): string {
@@ -39,6 +43,9 @@ interface EditorState {
   selection: string[];
   scale: number;
   showGrid: boolean;
+  showLabels: boolean;
+  tool: DrawTool;
+  theme: Theme;
   past: StageDoc[];
   future: StageDoc[];
 
@@ -55,8 +62,11 @@ interface EditorState {
   // stage items
   addItem: (item: LibraryItem, centerX: number, centerY: number) => void;
   addText: (x: number, y: number) => void;
+  addShapeFromDrag: (kind: ShapeKind, x: number, y: number, w: number, h: number) => void;
+  addPolygon: (points: { x: number; y: number }[]) => void;
   updateItem: (id: string, patch: Partial<StageItem>) => void;
   updateText: (id: string, patch: Partial<TextItem>) => void;
+  updateShape: (id: string, patch: Partial<ShapeItem>) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
   moveSelected: (dx: number, dy: number) => void;
@@ -77,6 +87,10 @@ interface EditorState {
   // view
   setScale: (scale: number) => void;
   toggleGrid: () => void;
+  toggleLabels: () => void;
+  setTool: (tool: DrawTool) => void;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -85,6 +99,9 @@ export const useEditorStore = create<EditorState>()(
     selection: [],
     scale: 1,
     showGrid: true,
+    showLabels: true,
+    tool: "select",
+    theme: "dark",
     past: [],
     future: [],
 
@@ -103,7 +120,8 @@ export const useEditorStore = create<EditorState>()(
         state.doc = previous;
         state.selection = state.selection.filter((id) =>
           state.doc.items.some((i) => i.id === id) ||
-          state.doc.texts.some((t) => t.id === id),
+          state.doc.texts.some((t) => t.id === id) ||
+          state.doc.shapes.some((sh) => sh.id === id),
         );
       }),
 
@@ -147,6 +165,7 @@ export const useEditorStore = create<EditorState>()(
           rotation: 0,
           flipX: false,
           flipY: false,
+          label: item.label,
         };
         state.doc.items.push(el);
         state.selection = [el.id];
@@ -180,6 +199,60 @@ export const useEditorStore = create<EditorState>()(
         if (el) Object.assign(el, patch);
       }),
 
+    updateShape: (id, patch) =>
+      set((state) => {
+        const el = state.doc.shapes.find((sh) => sh.id === id);
+        if (el) Object.assign(el, patch);
+      }),
+
+    addShapeFromDrag: (kind, x, y, w, h) =>
+      set((state) => {
+        state.past.push(clone(state.doc));
+        state.future = [];
+        const el: ShapeItem = {
+          id: newId("sh"),
+          kind,
+          x,
+          y,
+          w,
+          h,
+          rotation: 0,
+          fill: kind === "rect",
+        };
+        state.doc.shapes.push(el);
+        state.selection = [el.id];
+      }),
+
+    addPolygon: (points) =>
+      set((state) => {
+        if (points.length < 3) return;
+        state.past.push(clone(state.doc));
+        state.future = [];
+        const xs = points.map((p) => p.x);
+        const ys = points.map((p) => p.y);
+        const minX = Math.min(...xs);
+        const minY = Math.min(...ys);
+        const w = Math.max(1, Math.max(...xs) - minX);
+        const h = Math.max(1, Math.max(...ys) - minY);
+        const flat: number[] = [];
+        for (const p of points) {
+          flat.push((p.x - minX) / w, (p.y - minY) / h);
+        }
+        const el: ShapeItem = {
+          id: newId("sh"),
+          kind: "polygon",
+          x: minX,
+          y: minY,
+          w,
+          h,
+          rotation: 0,
+          points: flat,
+          fill: false,
+        };
+        state.doc.shapes.push(el);
+        state.selection = [el.id];
+      }),
+
     removeSelected: () =>
       set((state) => {
         if (state.selection.length === 0) return;
@@ -188,6 +261,7 @@ export const useEditorStore = create<EditorState>()(
         const sel = new Set(state.selection);
         state.doc.items = state.doc.items.filter((i) => !sel.has(i.id));
         state.doc.texts = state.doc.texts.filter((t) => !sel.has(t.id));
+        state.doc.shapes = state.doc.shapes.filter((sh) => !sel.has(sh.id));
         state.selection = [];
       }),
 
@@ -212,8 +286,16 @@ export const useEditorStore = create<EditorState>()(
             newIds.push(copy.id);
             return copy;
           });
+        const shapeCopies = state.doc.shapes
+          .filter((sh) => sel.includes(sh.id))
+          .map((sh) => {
+            const copy = { ...sh, id: newId("sh"), x: sh.x + 24, y: sh.y + 24 };
+            newIds.push(copy.id);
+            return copy;
+          });
         state.doc.items.push(...itemCopies);
         state.doc.texts.push(...textCopies);
+        state.doc.shapes.push(...shapeCopies);
         state.selection = newIds;
       }),
 
@@ -228,6 +310,12 @@ export const useEditorStore = create<EditorState>()(
           }
         }
         for (const el of state.doc.texts) {
+          if (sel.includes(el.id)) {
+            el.x += dx;
+            el.y += dy;
+          }
+        }
+        for (const el of state.doc.shapes) {
           if (sel.includes(el.id)) {
             el.x += dx;
             el.y += dy;
@@ -255,6 +343,9 @@ export const useEditorStore = create<EditorState>()(
           if (state.selection.includes(el.id)) el.rotation = (el.rotation + deg) % 360;
         }
         for (const el of state.doc.texts) {
+          if (state.selection.includes(el.id)) el.rotation = (el.rotation + deg) % 360;
+        }
+        for (const el of state.doc.shapes) {
           if (state.selection.includes(el.id)) el.rotation = (el.rotation + deg) % 360;
         }
       }),
@@ -340,6 +431,26 @@ export const useEditorStore = create<EditorState>()(
       set((state) => {
         state.showGrid = !state.showGrid;
       }),
+
+    toggleLabels: () =>
+      set((state) => {
+        state.showLabels = !state.showLabels;
+      }),
+
+    setTool: (tool) =>
+      set((state) => {
+        state.tool = tool;
+      }),
+
+    setTheme: (theme) =>
+      set((state) => {
+        state.theme = theme;
+      }),
+
+    toggleTheme: () =>
+      set((state) => {
+        state.theme = state.theme === "dark" ? "light" : "dark";
+      }),
   })),
 );
 
@@ -354,6 +465,13 @@ export function useSelectedText(): TextItem | undefined {
   return useEditorStore((state) => {
     if (state.selection.length !== 1) return undefined;
     return state.doc.texts.find((t) => t.id === state.selection[0]);
+  });
+}
+
+export function useSelectedShape(): ShapeItem | undefined {
+  return useEditorStore((state) => {
+    if (state.selection.length !== 1) return undefined;
+    return state.doc.shapes.find((sh) => sh.id === state.selection[0]);
   });
 }
 
