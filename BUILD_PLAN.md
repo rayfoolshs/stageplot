@@ -412,7 +412,13 @@ Toolbar toggle (☾/☀), persisted to `localStorage`. Implemented by remapping
 Tailwind's `neutral` palette variables under `html.light`, so the entire UI
 remaps with no per-component rewrites.
 
-### 15.5 Fixes
+### 15.5 Mixing-desk input list
+An editable input list is pinned below the stage (and will print with the rider):
+columns **Channel · Instrument · Person · Microphone · Monitor FB · DCA/Subgroup ·
+Notes**, with add/remove rows and auto-numbering. Backed by `StageDoc.channels`;
+`person`, `monitor` and `dca` were added to `ChannelRow`.
+
+### 15.6 Fixes
 - Delete / Backspace removes the selected item / text / shape.
 - Canvas gestures blur a focused inspector field so shortcuts act on the canvas.
 - Fixed a Strict Mode double-invoke bug: a side effect inside a `setState`

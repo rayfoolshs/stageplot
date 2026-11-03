@@ -31,9 +31,12 @@ function emptyChannel(number: number): ChannelRow {
     id: newId("ch"),
     number,
     source: "",
+    person: "",
     mic: "",
     stand: "",
     phantom: "",
+    monitor: "",
+    dca: "",
     notes: "",
   };
 }

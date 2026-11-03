@@ -230,8 +230,7 @@ export function InspectorPanel() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-neutral-300">Channel lists</h2>
-        <ChannelTable kind="channels" title="Inputs" />
+        <h2 className="text-xs font-semibold text-neutral-300">Output lists</h2>
         <ChannelTable kind="outputs" title="Outputs (monitors / IEM)" />
       </section>
     </aside>

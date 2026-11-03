@@ -69,9 +69,12 @@ export const ChannelRowSchema = z.object({
   id: z.string(),
   number: z.number().int(),
   source: z.string(),
+  person: z.string().default(""),
   mic: z.string(),
   stand: z.string(),
   phantom: z.string(),
+  monitor: z.string().default(""),
+  dca: z.string().default(""),
   notes: z.string(),
 });
 export type ChannelRow = z.infer<typeof ChannelRowSchema>;

@@ -3,6 +3,7 @@ import { Toolbar } from "./Toolbar";
 import { LibraryPanel } from "./LibraryPanel";
 import { Canvas } from "./Canvas";
 import { InspectorPanel } from "./InspectorPanel";
+import { InputList } from "./InputList";
 import { initialDoc, saveDraft } from "../persistence";
 import { useEditorStore } from "../store";
 
@@ -98,8 +99,11 @@ export function Editor() {
       <Toolbar />
       <div className="flex min-h-0 flex-1">
         <LibraryPanel />
-        <div className="min-w-0 flex-1">
-          <Canvas />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1">
+            <Canvas />
+          </div>
+          <InputList />
         </div>
         <InspectorPanel />
       </div>
