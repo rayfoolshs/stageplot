@@ -63,6 +63,8 @@ app.post("/api/meta/validate-doc", async (request, reply) => {
 });
 
 // M2: render the rider to PDF using the shared `/print` view in headless Chrome.
+// Unauthenticated for now (the dev server binds to loopback only); the render
+// route gets the same session guard as everything else in M3.
 app.post("/api/render/pdf", async (request, reply) => {
   const body = request.body as { doc?: unknown } | undefined;
   const result = parseStageDocSafe(body?.doc);

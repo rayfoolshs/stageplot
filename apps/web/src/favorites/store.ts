@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { toast } from "../ui/toast";
 import { favoritesApi } from "./api";
 
 type FavoritesState = {
@@ -36,6 +37,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
       set({ itemKeys });
     } catch {
       set({ itemKeys: previous });
+      toast("Couldn’t update favorites.", "error");
     }
   },
 

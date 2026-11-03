@@ -54,6 +54,15 @@ function normalizeBox(
   };
 }
 
+type Box = { x: number; y: number; w: number; h: number };
+
+function overlaps(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+/** Stage units per grid square (matches the 25px CSS cells at 100% zoom). */
+const GRID_STEP = 25;
+
 export function Canvas() {
   const doc = useEditorStore((s) => s.doc);
   const scale = useEditorStore((s) => s.scale);
@@ -64,6 +73,7 @@ export function Canvas() {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const [draftRect, setDraftRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [marquee, setMarquee] = useState<Box | null>(null);
   const [polyPoints, setPolyPoints] = useState<{ x: number; y: number }[]>([]);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
   // Mirror of polyPoints for logic — never run side effects inside a state updater.
@@ -121,7 +131,51 @@ export function Canvas() {
   const onStagePointerDown = (e: ReactPointerEvent) => {
     blurActiveField();
     if (tool === "select") {
-      if (e.target === e.currentTarget) useEditorStore.getState().clearSelection();
+      // Only the empty stage starts a marquee; item drags stop propagation.
+      if (e.target !== e.currentTarget) return;
+
+      const additive = e.shiftKey;
+      const start = toStage(e.clientX, e.clientY);
+      let current = start;
+      let moved = false;
+      setMarquee({ ...start, w: 0, h: 0 });
+
+      const move = (ev: PointerEvent) => {
+        current = toStage(ev.clientX, ev.clientY);
+        const box = normalizeBox(start, current);
+        if (box.w > 2 || box.h > 2) moved = true;
+        setMarquee(box);
+      };
+
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        setMarquee(null);
+
+        const box = normalizeBox(start, current);
+        const store = useEditorStore.getState();
+        if (!moved || (box.w < 4 && box.h < 4)) {
+          if (!additive) store.clearSelection();
+          return;
+        }
+
+        const hits = new Set<string>();
+        for (const item of store.doc.items) if (overlaps(box, item)) hits.add(item.id);
+        for (const shape of store.doc.shapes) if (overlaps(box, shape)) hits.add(shape.id);
+        for (const text of store.doc.texts) {
+          // Text has no measured box; estimate from the glyph size.
+          const w = Math.max(text.fontSize, text.text.length * text.fontSize * 0.55);
+          if (overlaps(box, { x: text.x, y: text.y, w, h: text.fontSize * 1.25 })) {
+            hits.add(text.id);
+          }
+        }
+
+        const ids = [...hits];
+        store.setSelection(additive ? [...new Set([...store.selection, ...ids])] : ids);
+      };
+
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
       return;
     }
     if (tool === "polygon") {
@@ -266,6 +320,32 @@ export function Canvas() {
               );
             })}
         </div>
+
+        {/* empty stage hint */}
+        {interactive &&
+          doc.items.length === 0 &&
+          doc.texts.length === 0 &&
+          doc.shapes.length === 0 &&
+          !marquee && (
+            <div className="pointer-events-none absolute inset-0 flex items-start justify-start p-4">
+              <p className="rounded-md border border-dashed border-neutral-700 px-4 py-2 text-sm text-neutral-500">
+                Drag items from the library onto the stage
+              </p>
+            </div>
+          )}
+
+        {/* marquee selection */}
+        {marquee && (
+          <div
+            className="pointer-events-none absolute border border-sky-400 bg-sky-400/10"
+            style={{
+              left: marquee.x * scale,
+              top: marquee.y * scale,
+              width: marquee.w * scale,
+              height: marquee.h * scale,
+            }}
+          />
+        )}
 
         {/* draft previews */}
         {draftRect && (
@@ -543,6 +623,11 @@ function StageItemNode({
   const startMove = (e: ReactPointerEvent) => {
     blurActiveField();
     const store = useEditorStore.getState();
+    // Magnetic grid: positions snap to 25-unit cells when the grid is on.
+    // Hold Alt for free placement.
+    const snapEnabled = !e.altKey && store.showGrid;
+    const snap = (value: number) =>
+      snapEnabled ? Math.round(value / GRID_STEP) * GRID_STEP : value;
     if (e.shiftKey) {
       store.toggleSelection(item.id, true);
     } else if (!store.selection.includes(item.id)) {
@@ -563,7 +648,7 @@ function StageItemNode({
     beginPointerDrag(e, (dx, dy) => {
       const s = useEditorStore.getState();
       for (const [id, pos] of start) {
-        const patch = { x: pos.x + dx / scale, y: pos.y + dy / scale };
+        const patch = { x: snap(pos.x + dx / scale), y: snap(pos.y + dy / scale) };
         if (s.doc.items.some((i) => i.id === id)) s.updateItem(id, patch);
         else if (s.doc.texts.some((t) => t.id === id)) s.updateText(id, patch);
         else s.updateShape(id, patch);

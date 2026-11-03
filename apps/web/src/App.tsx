@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Editor } from "./editor/components/Editor";
 import { useAuthStore } from "./auth/store";
+import { Toaster } from "./ui/Toaster";
 
 export function App({ riderId }: { riderId?: string }) {
   // Resolve the session once; the toolbar shows the result.
@@ -8,5 +9,10 @@ export function App({ riderId }: { riderId?: string }) {
     void useAuthStore.getState().refresh();
   }, []);
 
-  return <Editor riderId={riderId} />;
+  return (
+    <>
+      <Editor riderId={riderId} />
+      <Toaster />
+    </>
+  );
 }

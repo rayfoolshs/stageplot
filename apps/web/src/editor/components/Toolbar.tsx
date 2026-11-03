@@ -7,6 +7,7 @@ import { useAuthStore } from "../../auth/store";
 import { saveToCloud } from "../../riders/save";
 import { downloadPdf } from "../../lib/pdf";
 import { ShareDialog } from "../../share/ShareDialog";
+import { toast } from "../../ui/toast";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
 
@@ -16,12 +17,17 @@ function openPrintView() {
   window.open("/print", "_blank");
 }
 
+function openPrintViewWithNotice() {
+  toast("PDF service unavailable — opening the print view instead.");
+  openPrintView();
+}
+
 async function exportPdf() {
   const doc = useEditorStore.getState().doc;
   const ok = await downloadPdf(doc);
   // No API (or no Chrome on the server): fall back to the browser's own
   // "save as PDF" from the print view.
-  if (!ok) openPrintView();
+  if (!ok) openPrintViewWithNotice();
 }
 
 function ToolButton({
@@ -151,10 +157,12 @@ export function Toolbar() {
               setCloudError(null);
               try {
                 await saveToCloud();
+                toast("Saved to your account. Changes now autosave.", "success");
               } catch (err) {
                 const message =
                   err instanceof Error ? err.message : "Could not save to the cloud.";
                 setCloudError(message);
+                toast(message, "error");
               } finally {
                 setCloudBusy(false);
               }

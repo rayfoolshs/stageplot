@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useEditorStore } from "../editor/store";
 import { shareApi } from "./api";
+import { toast } from "../ui/toast";
 
 /** Owner-side control for the public read-only link. */
 export function ShareDialog({ onClose }: { onClose: () => void }) {
@@ -57,9 +58,11 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      toast("Share link copied.", "success");
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
       setError("Copy failed — select the link and copy it manually.");
+      toast("Couldn’t copy the link — select it and copy manually.", "error");
     }
   }
 

@@ -1,9 +1,12 @@
 import { useEditorStore } from "../editor/store";
+import { toast } from "../ui/toast";
 import { ridersApi } from "./api";
 import { renderThumbnail } from "./thumbnail";
 
 let inFlight: Promise<void> | null = null;
 let queued = false;
+// Only complain once per failure streak; the toolbar badge carries the state.
+let reportedError = false;
 
 /**
  * Persist the bound rider. Saves are serialised: calling this while one is in
@@ -26,8 +29,13 @@ export async function saveRiderNow(): Promise<void> {
       const thumbnail = await renderThumbnail(doc);
       await ridersApi.update(riderId, { doc, thumbnail: thumbnail ?? undefined });
       useEditorStore.getState().setSaveState("saved");
+      reportedError = false;
     } catch {
       useEditorStore.getState().setSaveState("error");
+      if (!reportedError) {
+        reportedError = true;
+        toast("Couldn’t save to the cloud. We’ll retry on your next edit.", "error");
+      }
     }
   })();
 

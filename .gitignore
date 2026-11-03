@@ -19,3 +19,7 @@ apps/api/prisma/*.db-journal
 Thumbs.db
 .vscode/
 .idea/
+
+# e2e artifacts
+test-results/
+playwright-report/

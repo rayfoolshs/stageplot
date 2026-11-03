@@ -15,24 +15,49 @@ with a fast, keyboard-friendly editor.
 ## Features
 
 **Stage editor**
-- Drag-and-drop canvas with **43 items** across 11 categories (drums, amps, keys,
-  guitars, strings, winds, mics, audio, people, stage, lighting)
+- Drag-and-drop canvas with **46 items** across 12 categories (drums, amps, keys,
+  guitars, strings, winds, mics, audio, people, stage, lighting, video)
 - Move, resize, rotate, flip and layer items; magnetic grid; zoom and pan
 - Optional **captions** under each item (toggle all from the toolbar)
 - **Drawing tools** — rectangle, circle/ellipse, and polygon with draggable
   vertex editing; filled or outline
-- Multi-select, duplicate, delete, undo/redo, arrow-key nudging
+- Multi-select (Shift-click and **marquee drag**), duplicate, delete, undo/redo,
+  arrow-key nudging
+- **Magnetic grid** — items snap to 25-unit cells while the grid is on (Alt = free)
+- **Resizable panels** — drag the dividers (double-click resets) to give the
+  stage more room; sizes are remembered
 
 **Mixing-desk input list**
 - Editable table pinned below the stage with columns:
   **Channel · Instrument · Person · Input type · Microphone · Monitor FB ·
   DCA/Subgroup · Notes**
 - Input type is a dropdown (Mic / DI / Line / Wireless); auto-numbered rows
+- **Monitor FB** is a dropdown fed by the monitors on the plot
+- Dropping a stage monitor auto-names it **Monitor 1, 2, …**, adds its row to
+  **Monitors / outputs**, and keeps the two in sync (renames follow everywhere)
 
 **Outputs & document**
 - Output list for monitors / in-ears
+- **PDF export** — one-click download via a headless-Chrome render of the same
+  `/print` layout (portrait or landscape); falls back to the browser's print
+  dialog if the API isn't running
+
+**Accounts**
+- Register / sign in / sign out with an httpOnly session cookie
+- Argon2id password hashing, per-IP rate limits, CSRF origin checks
+- Dev sessions live in memory, so restarting the API signs you out
+
+**Cloud save**
+- **My riders** (`/riders`): open, rename, duplicate, delete, with live thumbnails
+- Autosave to your account with a `Saving… / Saved / Save failed` indicator
+- Start locally, then **Save to cloud** to bind the draft to a new rider (`/r/:id`)
+
+**Sharing & favorites**
+- **Share** a rider as a public read-only link (`/s/:token`) with revoke; the
+  link can print or download the PDF without an account
+- Star library items and filter with **★ Favorites** (per account)
 - Document name, orientation (portrait/landscape) and footer notes
-- **Light & dark theme** (persisted)
+- **Light & dark theme** — light by default, then remembers your choice
 - Autosave to `localStorage`
 
 ---
@@ -69,8 +94,12 @@ Requires **Node 20+**.
 ```powershell
 npm install
 
+# API: create the local SQLite database (once)
+copy apps\api\.env.example apps\api\.env
+npm.cmd run db:push
+
 npm.cmd run dev:web   # editor  -> http://localhost:5173
-npm.cmd run dev:api   # API     -> http://127.0.0.1:3001  (optional for now)
+npm.cmd run dev:api   # API     -> http://127.0.0.1:3001  (accounts, PDF export)
 ```
 
 Other scripts:
@@ -78,7 +107,22 @@ Other scripts:
 ```powershell
 npm.cmd run build       # typecheck + production build (all workspaces)
 npm.cmd run typecheck   # tsc --noEmit across workspaces
+npm.cmd run test:e2e    # Playwright happy path (starts dev servers as needed)
 ```
+
+The e2e suite uses the locally installed Google Chrome (`channel: "chrome"`).
+In CI, run `npx playwright install chromium` and remove the channel.
+
+### PDF export
+`Export PDF` posts the document to the API, which prints the web app's `/print`
+route in headless Chrome and returns a PDF. It needs:
+
+- the API running (`npm run dev:api`), and
+- a local Chrome/Chromium. Set `CHROME_PATH` if it isn't in a standard location,
+  and `PRINT_URL` if the web app isn't on `http://localhost:5173`.
+
+Without the API, the button opens `/print` instead, where the browser's own
+print dialog can save the same layout as a PDF.
 
 ### Windows notes
 - If PowerShell blocks npm scripts (`npm.ps1` disabled), use `npm.cmd`.
@@ -104,11 +148,11 @@ one source of truth, so what you see is what prints.
 - [x] **M0** Foundations — monorepo, shared contract, SQLite/Prisma
 - [x] **M1** Editor core — library, canvas, undo/redo, channel lists, labels,
   shapes, theming
-- [ ] **M2** PDF export — print route + headless-Chromium render endpoint
-- [ ] **M3** Accounts — register / login / sessions
-- [ ] **M4** Cloud save — rider CRUD, autosave, "My riders", image uploads
-- [ ] **M5** Sharing — public read-only links
-- [ ] **M6** Polish — marquee select, snapping, e2e tests
+- [x] **M2** PDF export — print route + headless-Chromium render endpoint
+- [x] **M3** Accounts — register / login / sessions
+- [x] **M4** Cloud save — rider CRUD, autosave, thumbnails, "My riders" (image uploads deferred)
+- [x] **M5** Sharing — public read-only links + favorites
+- [x] **M6** Polish — marquee select, snapping, toasts, e2e tests
 
 See [BUILD_PLAN.md](./BUILD_PLAN.md) for the full plan.
 

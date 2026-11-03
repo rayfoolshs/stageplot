@@ -5,7 +5,7 @@ Ridermaker. This document is the plan of record before any code is written.
 
 - **Target scope:** MVP + accounts / cloud save
 - **Frontend:** React + TypeScript (Vite)
-- **Status:** Planning — not yet scaffolded
+- **Status:** M0–M6 complete — MVP plus accounts, cloud save and sharing
 
 ---
 
@@ -313,32 +313,102 @@ Autosave: debounce PUT `/api/riders/:id` ~1.5s after edits.
 - [x] Save/load doc to localStorage (debounced autosave)
 - [x] Drawing tools (rect / circle / polygon) + item labels + light/dark theme
 
-### M2 — PDF export
-- [ ] `/print` read-only render route
-- [ ] Puppeteer renderer + `/api/render/pdf`
-- [ ] Portrait/landscape, download button
+### M2 — PDF export ✅ (done)
+- [x] `/print` read-only render route (A4, honours portrait/landscape)
+- [x] Headless-Chrome renderer + `POST /api/render/pdf`
+- [x] Portrait/landscape, one-click download from the toolbar
+- [x] Browser print fallback when the API or Chrome is unavailable
 
-### M3 — Accounts
-- [ ] Register/login/logout, session cookie, `/api/auth/me`
-- [ ] Login + register screens, route guards
-- [ ] Password hashing + rate limiting + CSRF
+### M3 — Accounts ✅ (done)
+- [x] Register/login/logout, session cookie, `/api/auth/me`
+- [x] Login + register screens, guest-route redirect
+- [x] Argon2id hashing, per-IP rate limits, origin check + SameSite=Lax CSRF defence
 
-### M4 — Cloud save & My Riders
-- [ ] Rider CRUD API + ownership
-- [ ] Autosave, thumbnails
-- [ ] "My riders" list: open, rename, duplicate, delete
-- [ ] Custom image uploads (`/api/assets`)
+Implementation notes:
+- Session cookie `stageplot.sid` (`httpOnly`, `SameSite=Lax`, `secure` in prod,
+  30 days) in `@fastify/session`'s in-memory store (dev). The session is
+  **regenerated on login/register** so a pre-login cookie can't be fixated.
+- Passwords are **argon2id** (`@node-rs/argon2`, 19 MiB / t=2 / p=1). Unknown
+  emails still burn an argon2 verify so timing doesn't leak accounts.
+- Limits: 10/min per IP on login, 5 per 10 min on register.
+- CSRF: `SameSite=Lax` plus an Origin allow-list (`WEB_ORIGIN`) on every
+  state-changing auth route; requests without an Origin (curl) are allowed.
+- The editor stays usable without an account (local-first). The only guard for
+  now is the guest redirect on `/login` and `/register`; rider-ownership guards
+  arrive with M4.
+- Prisma: `npm run db:push` creates `apps/api/prisma/dev.db` from
+  `apps/api/.env` (`DATABASE_URL`).
 
-### M5 — Sharing
-- [ ] Share token create/revoke
-- [ ] `/s/:token` public read-only view + "print" from share
-- [ ] Favorites API
+### M4 — Cloud save & My Riders ✅ (done)
+- [x] Rider CRUD API + ownership
+- [x] Autosave, thumbnails
+- [x] "My riders" list: open, rename, duplicate, delete
+- [ ] Custom image uploads (`/api/assets`) — **deferred**: needs a custom-item
+      model on `StageDoc` (itemKey + asset reference), not just a file endpoint
 
-### M6 — Polish
-- [ ] Magnetic grid, zoom/pan refinements, marquee multi-select
-- [ ] Empty/loading/error states, toasts
-- [ ] Playwright happy-path e2e
-- [ ] Basic responsive layout (editor is desktop-first)
+Implementation notes:
+- Routes: `GET/POST /api/riders`, `GET/PUT/DELETE /api/riders/:id`. Every query
+  is scoped by `userId`; someone else's id returns **404**, not 403, so ids
+  aren't probeable. Documents are validated with the shared `StageDoc` schema.
+- `PUT` accepts a full `doc` (name derives from `doc.meta.name`) or just a
+  `name` for list renames, which rewrites `doc.meta.name` server-side so the
+  list and the printed title never drift.
+- Autosave: 1 s debounce, requests serialised (a save in flight queues one
+  more), status shown in the toolbar (`Saving… / Saved / Save failed`).
+- Thumbnails are SVG data URLs rendered client-side from the **same**
+  `StageSvg` used by the print view, capped at 200 KB server-side.
+- The editor is still local-first: `/` edits the localStorage draft, and a
+  signed-in user can promote it with **Save to cloud** (binds the doc to a new
+  rider and swaps the URL to `/r/:id` without a reload).
+- New routes: `/riders` (list) and `/r/:id` (editor bound to a rider). Both
+  redirect to `/login?next=…` when signed out; `next` is same-origin-only.
+- Body limit raised to 3 MB for docs with thumbnails.
+
+### M5 — Sharing ✅ (done)
+- [x] Share token create/revoke
+- [x] `/s/:token` public read-only view + "print" from share
+- [x] Favorites API
+
+Implementation notes:
+- Tokens are 24 random bytes (base64url). Re-sharing an active link returns the
+  same token; after a revoke, sharing mints a **new** token so an old link can
+  never be revived. Revoking nulls the token *and* `isPublic`.
+- `GET /api/share/:token` is unauthenticated but returns only
+  `{ name, thumbnail, updatedAt, doc }` — never the owner or other riders. It
+  sends `Cache-Control: no-store` so revocation is immediate, and is rate
+  limited to 60/min per IP.
+- `/api/riders` summaries now include `shareToken`/`isPublic` (owner-scoped) so
+  the list can show a **Shared** badge and the editor knows the link state.
+- The public page reuses `PrintSheet`, so the shared view, the print dialog and
+  the PDF are byte-for-byte the same layout. It offers **Download PDF** (the
+  render endpoint is public) and **Print**.
+- Favorites: `GET /api/favorites`, and `PUT /api/favorites { itemKey }` toggles.
+  The library shows a star on each tile (signed-in only) and a **★ Favorites**
+  filter chip; toggles are optimistic and reverted if the request fails.
+
+### M6 — Polish ✅ (done)
+- [x] Magnetic grid + marquee multi-select
+- [x] Empty/loading/error states, toasts
+- [x] Playwright happy-path e2e
+- [x] Basic responsive layout (editor is desktop-first)
+- [ ] Canvas pan gesture (wheel/scrollbars work today; a space-drag pan is a
+      nice follow-up)
+
+Implementation notes:
+- **Marquee**: drag on empty stage selects intersecting items, shapes and texts
+  (text bounds are estimated from font size); Shift adds to the selection.
+- **Magnetic grid**: moving items snaps to the 25-unit grid whenever the grid is
+  visible; hold **Alt** for free placement. Resizing stays free-form.
+- **Toasts**: small bottom-right stack (`ui/toast.ts` + `Toaster`), auto-dismiss
+  after 4.5 s. Used for autosave failure (once per failure streak), cloud-save
+  success/error, share-link copy, favorites errors and PDF fallback.
+- **Empty stage** shows a drag-from-library hint.
+- **Responsive**: the editor has a 1100px minimum and scrolls horizontally below
+  that (desktop-first); riders/auth/share pages reflow on their own.
+- **E2E**: `npm run test:e2e` runs `e2e/happy-path.spec.ts` in Playwright using
+  the installed Chrome (`channel: "chrome"`), starting the dev servers when
+  needed. The happy path registers, drags a monitor onto the plot, saves to the
+  cloud, verifies autosave, finds the rider in My riders and reopens it.
 
 ---
 
@@ -408,7 +478,7 @@ the canvas. Toggle all labels from the toolbar; edit per item in the inspector.
   shapes from equipment.
 
 ### 15.4 Light / dark theme
-Toolbar toggle (☾/☀), persisted to `localStorage`. Implemented by remapping
+Toolbar toggle (☾/☀), light by default, persisted to `localStorage`. Implemented by remapping
 Tailwind's `neutral` palette variables under `html.light`, so the entire UI
 remaps with no per-component rewrites.
 
@@ -425,6 +495,23 @@ dropdown (Mic / DI / Line / Wireless). Backed by `StageDoc.channels`; `person`,
 - Fixed a Strict Mode double-invoke bug: a side effect inside a `setState`
   updater created **two** polygons per Enter press.
 
+### 15.7 PDF export (M2)
+- **One layout source.** `apps/web/src/print/PrintSheet.tsx` renders the rider
+  (stage SVG, input list, monitors, footer) at exact A4 size. The on-screen
+  print view, the browser's print dialog and the server-side PDF all use it.
+- **`/print`** is a standalone route (path switch in `main.tsx`, no router). It
+  reads the doc from `localStorage` (`stageplot:print-doc`, falling back to the
+  autosaved draft). The API seeds that key in headless Chrome before the page
+  boots, so the renderer never needs a network round-trip for the document.
+- **`POST /api/render/pdf`** validates the body with the shared zod schema,
+  then prints `/print` with `puppeteer-core` + the system Chrome
+  (`CHROME_PATH`, else the usual macOS/Linux/Windows locations). One warm
+  browser, one render at a time, closed on SIGINT/SIGTERM.
+- **Fidelity:** waits for `document.fonts.ready` (page sets
+  `data-print-ready`), `printBackground: true`, `preferCSSPageSize: true`.
+- **Fallback:** if the API is unreachable (or no Chrome), the toolbar opens
+  `/print` in a tab, where "Print / Save as PDF" uses the browser engine.
+
 ### Known dev caveat
 Editing the store module while the dev server runs can leave the global keyboard
 listener bound to a stale store instance. Hard-refresh (Ctrl+Shift+R) after
@@ -434,11 +521,11 @@ pulling changes.
 
 | # | Milestone | Output |
 |---|---|---|
-| M2 | PDF export | `/print` route + Puppeteer render endpoint |
+| ~~M2~~ | ~~PDF export~~ | ✅ `/print` route + headless-Chrome render endpoint |
 | M3 | Accounts | register/login/session, hashing, CSRF, rate limiting |
-| M4 | Cloud save | rider CRUD, autosave, thumbnails, "My riders", image uploads |
-| M5 | Sharing | share tokens, public read-only view, favorites |
-| M6 | Polish | marquee multi-select, snapping, states, Playwright e2e |
+| ~~M4~~ | ~~Cloud save~~ | ✅ rider CRUD, autosave, thumbnails, "My riders" (images deferred) |
+| ~~M5~~ | ~~Sharing~~ | ✅ share tokens, public read-only view, favorites |
+| ~~M6~~ | ~~Polish~~ | ✅ marquee select, magnetic grid, toasts, Playwright e2e |
 
 Potential follow-ups to the new features (not yet planned in detail):
 custom shape colors / line width, template starters, arrow/connector tool,

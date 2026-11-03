@@ -170,7 +170,9 @@ export function Editor({ riderId }: { riderId?: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    // The editor is desktop-first: below this width the page scrolls rather
+    // than crushing the canvas. Secondary pages are responsive on their own.
+    <div className="flex h-full min-w-[1100px] flex-col">
       <Toolbar />
       <div className="flex min-h-0 flex-1">
         <LibraryPanel width={libraryWidth} />
