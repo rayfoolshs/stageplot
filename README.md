@@ -14,6 +14,10 @@ fast, keyboard-friendly editor.
 > endorsed by, or derived from Ridermaker. All artwork, code and copy here are
 > original.
 
+**Status:** MVP complete (milestones M0–M6). The editor is deployed as a static
+demo on GitHub Pages; the API-backed features (accounts, cloud save, sharing,
+server-side PDF) run locally with `dev:api`.
+
 ---
 
 ## Features
@@ -21,7 +25,7 @@ fast, keyboard-friendly editor.
 **Stage editor**
 - Drag-and-drop canvas with **46 items** across 12 categories (drums, amps, keys,
   guitars, strings, winds, mics, audio, people, stage, lighting, video)
-- Move, resize, rotate, flip and layer items; magnetic grid; zoom and pan
+- Move, resize, rotate, flip and layer items; zoom; scroll to pan
 - Optional **captions** under each item (toggle all from the toolbar)
 - **Drawing tools** — rectangle, circle/ellipse, and polygon with draggable
   vertex editing; filled or outline
@@ -60,9 +64,12 @@ fast, keyboard-friendly editor.
 - **Share** a rider as a public read-only link (`/s/:token`) with revoke; the
   link can print or download the PDF without an account
 - Star library items and filter with **★ Favorites** (per account)
+
+**Document & workspace**
 - Document name, orientation (portrait/landscape) and footer notes
 - **Light & dark theme** — light by default, then remembers your choice
-- Autosave to `localStorage`
+- Autosave to `localStorage` (or to your account when signed in)
+- Toasts for save/export/share errors; empty-stage hint
 
 ---
 
@@ -73,8 +80,10 @@ fast, keyboard-friendly editor.
 | Front end | React 19 + TypeScript + Vite |
 | State | Zustand (+ immer) |
 | Styling | Tailwind CSS v4 |
-| Backend (scaffold) | Fastify + Prisma |
+| Backend | Fastify + Prisma |
 | Database | SQLite (dev) → PostgreSQL later |
+| PDF | Headless Chrome (`puppeteer-core`) + a shared print layout |
+| Deploy | GitHub Pages (static web) via GitHub Actions |
 | Monorepo | npm workspaces |
 
 ---
@@ -84,8 +93,12 @@ fast, keyboard-friendly editor.
 ```
 apps/web/           React editor (Vite)
   src/editor/       store, item library, canvas + panels
-apps/api/           Fastify API + Prisma schema (accounts/cloud save, upcoming)
+  src/print/        A4 print sheet (browser + PDF renderer)
+  src/auth, riders, share, favorites, ui
+apps/api/           Fastify API: auth, riders, sharing, favorites, PDF renderer
 packages/shared/    StageDoc types + zod schemas (the shared contract)
+e2e/                Playwright happy path
+.github/workflows/  GitHub Pages deployment
 BUILD_PLAN.md       Plan of record and roadmap
 ```
 
@@ -152,8 +165,34 @@ repository, set **Settings → Pages → Source: GitHub Actions** once.
 
 A rider is a single, versioned JSON document — `StageDoc` — holding `stage`,
 `items`, `texts`, `shapes`, `channels` (inputs), `outputs`, `footer` and `meta`.
-The editor, the (planned) print view, and the PDF exporter all render from this
-one source of truth, so what you see is what prints.
+The editor, the print view and the PDF exporter all render from this one source
+of truth, so what you see is what prints.
+
+---
+
+## Testing
+
+```bash
+npm run test:e2e
+```
+
+Playwright runs the happy path — register, drag a stage monitor onto the plot,
+save to the cloud, confirm autosave, find the rider in **My riders**, reopen it
+— against the dev servers (started automatically if needed). It drives the
+locally installed Chrome; for CI, run `npx playwright install chromium` and drop
+the `channel` option.
+
+---
+
+## Known limitations
+
+- **Static demo:** GitHub Pages has no server, so accounts, cloud save, sharing,
+  favorites and the headless PDF renderer are unavailable there. The static
+  build hides the account UI and turns Export into **Print / Save PDF**.
+- **Custom image uploads** and a **space-drag canvas pan** are deferred.
+- The API's **sessions are in-memory** (restarting signs you out), and
+  `/api/render/pdf` is unauthenticated (loopback-only in dev).
+- No password reset / email verification yet.
 
 ---
 

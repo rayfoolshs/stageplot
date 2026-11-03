@@ -5,7 +5,8 @@ Ridermaker. This document is the plan of record before any code is written.
 
 - **Target scope:** MVP + accounts / cloud save
 - **Frontend:** React + TypeScript (Vite)
-- **Status:** M0–M6 complete — MVP plus accounts, cloud save and sharing
+- **Status:** M0–M6 complete — MVP plus accounts, cloud save, sharing, and a
+  live static build on GitHub Pages
 
 ---
 
@@ -459,8 +460,9 @@ stageplot/
 These landed after M1 (all in `apps/web`):
 
 ### 15.1 Item library expansion
-43 items across 11 categories (added a **Lighting** category). Clean, top-down
-artwork with a shared stroke language; icons tint to the selection color.
+46 items across 12 categories (added **Lighting** and **Video**, the latter with
+LED TV panels and a video wall). Clean, top-down artwork with a shared stroke
+language; icons tint to the selection color.
 
 ### 15.2 Item labels
 Items carry a caption (defaults to the library name) rendered under the item on
@@ -483,7 +485,7 @@ Tailwind's `neutral` palette variables under `html.light`, so the entire UI
 remaps with no per-component rewrites.
 
 ### 15.5 Mixing-desk input list
-An editable input list is pinned below the stage (and will print with the rider):
+An editable input list is pinned below the stage (and prints with the rider):
 columns **Channel · Instrument · Person · Input type · Microphone · Monitor FB ·
 DCA/Subgroup · Notes**, with add/remove rows and auto-numbering. "Input type" is a
 dropdown (Mic / DI / Line / Wireless). Backed by `StageDoc.channels`; `person`,
@@ -494,6 +496,9 @@ dropdown (Mic / DI / Line / Wireless). Backed by `StageDoc.channels`; `person`,
 - Canvas gestures blur a focused inspector field so shortcuts act on the canvas.
 - Fixed a Strict Mode double-invoke bug: a side effect inside a `setState`
   updater created **two** polygons per Enter press.
+- Autosave skipped the first edit after opening a document (the skip flag was
+  set before the subscription existed). Autosave now ignores the loaded document
+  object itself, so the first real edit persists — local drafts and cloud riders.
 
 ### 15.7 PDF export (M2)
 - **One layout source.** `apps/web/src/print/PrintSheet.tsx` renders the rider
@@ -517,24 +522,50 @@ Editing the store module while the dev server runs can leave the global keyboard
 listener bound to a stale store instance. Hard-refresh (Ctrl+Shift+R) after
 pulling changes.
 
-## 16. Roadmap (remaining)
+## 16. Roadmap
 
 | # | Milestone | Output |
 |---|---|---|
 | ~~M2~~ | ~~PDF export~~ | ✅ `/print` route + headless-Chrome render endpoint |
-| M3 | Accounts | register/login/session, hashing, CSRF, rate limiting |
+| ~~M3~~ | ~~Accounts~~ | ✅ register/login/session, hashing, rate limiting, CSRF origin checks |
 | ~~M4~~ | ~~Cloud save~~ | ✅ rider CRUD, autosave, thumbnails, "My riders" (images deferred) |
 | ~~M5~~ | ~~Sharing~~ | ✅ share tokens, public read-only view, favorites |
 | ~~M6~~ | ~~Polish~~ | ✅ marquee select, magnetic grid, toasts, Playwright e2e |
 
-Potential follow-ups to the new features (not yet planned in detail):
-custom shape colors / line width, template starters, arrow/connector tool,
-and richer icon set (lighting fixtures, drum sub-pieces).
+Potential follow-ups (not yet planned in detail): custom shape colors / line
+width, template starters, arrow/connector tool, richer icon set (lighting
+fixtures, drum sub-pieces), custom image uploads, and a canvas pan gesture.
 
-## 17. How to run
+## 17. Deployment (GitHub Pages)
 
-```powershell
-cd C:\Users\MusicDept\Downloads\stageplot
-npm.cmd run dev:api     # http://127.0.0.1:3001
-npm.cmd run dev:web     # http://localhost:5173  (proxies /api -> api)
+The web app is published as a **static demo** at
+<https://rayfoolshs.github.io/stageplot/>.
+
+- `npm run build:pages` builds `apps/web` with base `/stageplot/`, writes
+  `404.html` (SPA fallback for deep links such as `/print`) and sets
+  `VITE_STATIC_DEMO=1`.
+- `src/lib/appPath.ts` prefixes internal links/redirects with Vite's base so the
+  same code works at `/` locally and under the Pages subpath.
+- The static build hides the account UI (there is no API) and the Export button
+  becomes **Print / Save PDF**, which opens the print view synchronously so the
+  popup isn't blocked.
+- `.github/workflows/deploy-pages.yml` builds and deploys on every push to
+  `main`; Pages is configured with **Source: GitHub Actions**.
+- The API is **not** deployed: accounts, cloud save, sharing, favorites and the
+  server PDF renderer require running `apps/api` (or hosting it separately).
+
+## 18. How to run
+
+```bash
+npm install
+cp apps/api/.env.example apps/api/.env   # then edit SESSION_SECRET
+npm run db:push
+npm run dev:api     # http://127.0.0.1:3001
+npm run dev:web     # http://localhost:5173  (proxies /api -> api)
+
+npm run build       # typecheck + production build
+npm run build:pages # static demo for GitHub Pages (base /stageplot/)
+npm run test:e2e    # Playwright happy path
 ```
+
+On Windows, use `npm.cmd` (see the README).
