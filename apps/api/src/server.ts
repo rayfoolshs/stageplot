@@ -6,6 +6,8 @@ import { createEmptyDoc, parseStageDoc } from "@stageplot/shared";
 import { closePdfRenderer, renderPdf } from "./pdf";
 import { authRoutes } from "./auth/routes";
 import { riderRoutes } from "./riders/routes";
+import { shareRoutes } from "./share/routes";
+import { favoriteRoutes } from "./favorites/routes";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -40,6 +42,8 @@ await app.register(rateLimit, { global: false });
 
 await app.register(authRoutes);
 await app.register(riderRoutes);
+await app.register(shareRoutes);
+await app.register(favoriteRoutes);
 
 app.get("/api/health", async () => ({
   ok: true,

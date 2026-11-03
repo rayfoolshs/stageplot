@@ -6,6 +6,7 @@ import { AccountMenu } from "../../auth/AccountMenu";
 import { useAuthStore } from "../../auth/store";
 import { saveToCloud } from "../../riders/save";
 import { downloadPdf } from "../../lib/pdf";
+import { ShareDialog } from "../../share/ShareDialog";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
 
@@ -70,6 +71,7 @@ export function Toolbar() {
   const [exporting, setExporting] = useState(false);
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const hasSelection = selection.length > 0;
@@ -182,6 +184,17 @@ export function Toolbar() {
           </span>
         )}
 
+        {riderId && user && (
+          <button
+            type="button"
+            title="Create or manage a public read-only link"
+            onClick={() => setShareOpen(true)}
+            className="rounded-md bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700"
+          >
+            Share
+          </button>
+        )}
+
         <AccountMenu />
         <ToolButton
           label={theme === "dark" ? "☾" : "☀"}
@@ -196,6 +209,7 @@ export function Toolbar() {
             clearDraft();
             store.getState().setDoc(createEmptyDoc());
             store.getState().setRiderId(null);
+            store.getState().setShareToken(null);
             store.getState().setSaveState("idle");
             window.history.replaceState({}, "", "/");
           }}
@@ -217,6 +231,8 @@ export function Toolbar() {
           {exporting ? "Rendering…" : "Export PDF"}
         </button>
       </div>
+
+      {shareOpen && <ShareDialog onClose={() => setShareOpen(false)} />}
     </header>
   );
 }

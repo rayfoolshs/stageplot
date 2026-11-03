@@ -49,6 +49,8 @@ export async function saveToCloud(): Promise<void> {
 
   const store = useEditorStore.getState();
   store.setRiderId(rider.id);
+  // A brand-new rider has no share link; don't inherit a previous one.
+  store.setShareToken(null);
   store.setSaveState("saved");
   window.history.replaceState({}, "", `/r/${rider.id}`);
 }

@@ -102,6 +102,8 @@ interface EditorState {
   doc: StageDoc;
   /** Cloud rider id when this document is bound to the API; null = local draft. */
   riderId: string | null;
+  /** Public share token for the bound rider, when one exists. */
+  shareToken: string | null;
   saveState: SaveState;
   selection: string[];
   scale: number;
@@ -122,6 +124,7 @@ interface EditorState {
   setMeta: (patch: Partial<StageDoc["meta"]>) => void;
   setFooter: (text: string) => void;
   setRiderId: (id: string | null) => void;
+  setShareToken: (token: string | null) => void;
   setSaveState: (state: SaveState) => void;
 
   // stage items
@@ -162,6 +165,7 @@ export const useEditorStore = create<EditorState>()(
   immer((set, get) => ({
     doc: createEmptyDoc(),
     riderId: null,
+    shareToken: null,
     saveState: "idle",
     selection: [],
     scale: 1,
@@ -221,6 +225,11 @@ export const useEditorStore = create<EditorState>()(
     setRiderId: (id) =>
       set((state) => {
         state.riderId = id;
+      }),
+
+    setShareToken: (token) =>
+      set((state) => {
+        state.shareToken = token;
       }),
 
     setSaveState: (saveState) =>

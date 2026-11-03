@@ -5,6 +5,9 @@ export type RiderSummary = {
   id: string;
   name: string;
   thumbnail: string | null;
+  /** Set while the rider is publicly shareable; null after revoking. */
+  shareToken: string | null;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 };

@@ -4,6 +4,7 @@ import { App } from "./App";
 import { PrintPage } from "./print/PrintPage";
 import { AuthPage } from "./auth/AuthPage";
 import { MyRidersPage } from "./riders/MyRidersPage";
+import { SharePage } from "./share/SharePage";
 import "./index.css";
 
 const container = document.getElementById("root");
@@ -21,7 +22,9 @@ else if (path === "/register") page = <AuthPage mode="register" />;
 else if (path === "/riders") page = <MyRidersPage />;
 else {
   const rider = /^\/r\/([\w-]+)$/.exec(path);
+  const share = /^\/s\/([\w-]+)$/.exec(path);
   if (rider) page = <App riderId={rider[1]} />;
+  else if (share) page = <SharePage token={share[1]} />;
 }
 
 createRoot(container).render(<React.StrictMode>{page}</React.StrictMode>);

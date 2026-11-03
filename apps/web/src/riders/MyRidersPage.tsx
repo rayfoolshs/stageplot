@@ -193,8 +193,13 @@ export function MyRidersPage() {
                       className="w-full rounded border border-sky-600 bg-neutral-950 px-2 py-1 text-sm text-neutral-100 focus:outline-none"
                     />
                   ) : (
-                    <h2 className="truncate text-sm font-medium text-neutral-100" title={rider.name}>
-                      {rider.name}
+                    <h2 className="flex items-center gap-2 text-sm font-medium text-neutral-100" title={rider.name}>
+                      <span className="truncate">{rider.name}</span>
+                      {rider.isPublic && (
+                        <span className="shrink-0 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-300">
+                          Shared
+                        </span>
+                      )}
                     </h2>
                   )}
 

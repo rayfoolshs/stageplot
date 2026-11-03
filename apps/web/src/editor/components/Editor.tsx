@@ -31,6 +31,7 @@ export function Editor({ riderId }: { riderId?: string }) {
       skipNextSave.current = true;
       store.setDoc(initialDoc());
       store.setRiderId(null);
+      store.setShareToken(null);
       store.setSaveState("idle");
       return;
     }
@@ -43,6 +44,7 @@ export function Editor({ riderId }: { riderId?: string }) {
         skipNextSave.current = true;
         store.setDoc(rider.doc);
         store.setRiderId(rider.id);
+        store.setShareToken(rider.shareToken ?? null);
         store.setSaveState("saved");
       })
       .catch((err: unknown) => {
@@ -65,7 +67,7 @@ export function Editor({ riderId }: { riderId?: string }) {
     root.classList.toggle("light", theme === "light");
     root.style.colorScheme = theme;
     try {
-      localStorage.setItem("stageplot:theme", theme);
+      localStorage.setItem("stageplot:theme:v2", theme);
     } catch {
       /* private mode / storage disabled: the theme just won't persist */
     }

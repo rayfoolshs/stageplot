@@ -16,6 +16,8 @@ type RiderRow = {
   id: string;
   name: string;
   thumbnail: string | null;
+  shareToken: string | null;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,6 +27,8 @@ function summary(rider: RiderRow) {
     id: rider.id,
     name: rider.name,
     thumbnail: rider.thumbnail,
+    shareToken: rider.shareToken,
+    isPublic: rider.isPublic,
     createdAt: rider.createdAt.toISOString(),
     updatedAt: rider.updatedAt.toISOString(),
   };
@@ -63,6 +67,8 @@ export async function riderRoutes(app: FastifyInstance) {
         id: true,
         name: true,
         thumbnail: true,
+        shareToken: true,
+        isPublic: true,
         createdAt: true,
         updatedAt: true,
       },
