@@ -23,7 +23,7 @@ server-side PDF) run locally with `dev:api`.
 ## Features
 
 **Stage editor**
-- Drag-and-drop canvas with **46 items** across 12 categories (drums, amps, keys,
+- Drag-and-drop canvas with **48 items** across 12 categories (drums, amps, keys,
   guitars, strings, winds, mics, audio, people, stage, lighting, video)
 - Move, resize, rotate, flip and layer items; zoom; scroll to pan
 - Optional **captions** under each item (toggle all from the toolbar)

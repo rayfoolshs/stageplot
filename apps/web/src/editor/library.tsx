@@ -595,6 +595,69 @@ const VideoWall: Icon = () => (
   </g>
 );
 
+/* --- desks & racks ------------------------------------------------------- */
+
+/** A digital mixing console, top-down: colour screen, encoder row, fader bank. */
+const X32Console: Icon = () => (
+  <g {...S}>
+    <rect x="2" y="28" width="96" height="54" rx="4" {...FILL} />
+    {/* colour screen */}
+    <rect x="8" y="33" width="22" height="15" rx="2" />
+    <path d="M11.5 40.5 h15" strokeWidth={0.9} opacity={0.5} />
+    {/* encoder row */}
+    {[38, 46, 54, 62, 70, 78, 86].map((x) => (
+      <circle key={`k${x}`} cx={x} cy={40} r="2.6" {...SOLID} stroke="none" />
+    ))}
+    {/* fader bank */}
+    {[12, 21, 30, 39, 48, 57, 66, 75, 84, 92].map((x, i) => (
+      <g key={`f${x}`}>
+        <line x1={x} y1="56" x2={x} y2="76" strokeWidth={1.6} opacity={0.6} />
+        <rect
+          x={x - 2.6}
+          y={60 + (i % 3) * 4.5}
+          width="5.2"
+          height="3.4"
+          rx="1"
+          {...SOLID}
+          stroke="none"
+        />
+      </g>
+    ))}
+  </g>
+);
+
+/** Digital snake / I/O / DI rack: stacked 1U panels with XLR and jack sockets. */
+const DigitalSnake: Icon = () => (
+  <g {...S}>
+    <rect x="5" y="12" width="90" height="76" rx="3" {...FILL} />
+    <rect x="10" y="17" width="80" height="20" rx="2" />
+    <rect x="10" y="40" width="80" height="20" rx="2" />
+    <rect x="10" y="63" width="80" height="20" rx="2" />
+    {/* unit 1 — mini display + XLR fan-out */}
+    <rect x="14" y="22" width="14" height="10" rx="1.5" />
+    {[34, 43, 52, 61, 70, 79].map((x) => (
+      <g key={`a${x}`}>
+        <circle cx={x} cy="27" r="3.2" />
+        <circle cx={x} cy="27" r="1.2" {...SOLID} stroke="none" />
+      </g>
+    ))}
+    {/* unit 2 — XLR inputs */}
+    {[15, 24, 33, 42, 51, 60, 69, 78, 87].map((x) => (
+      <circle key={`b${x}`} cx={x} cy="50" r="3.2" />
+    ))}
+    {/* unit 3 — DI jack sockets + status LEDs */}
+    {[18, 30, 42, 54].map((x) => (
+      <g key={`c${x}`}>
+        <circle cx={x} cy="73" r="3.8" />
+        <circle cx={x} cy="73" r="1.3" {...SOLID} stroke="none" />
+      </g>
+    ))}
+    {[66, 72, 78, 84].map((x) => (
+      <circle key={`d${x}`} cx={x} cy="73" r="1.6" {...SOLID} stroke="none" />
+    ))}
+  </g>
+);
+
 /* --- catalog ------------------------------------------------------------- */
 
 export const LIBRARY_ITEMS: LibraryItem[] = [
@@ -639,6 +702,8 @@ export const LIBRARY_ITEMS: LibraryItem[] = [
   { key: "iem", label: "In-ear monitors", category: "Audio", w: 100, h: 80, Icon: IEM },
   { key: "headphones", label: "Headphones", category: "Audio", w: 110, h: 110, Icon: Headphones },
   { key: "mixer", label: "Mixer / console", category: "Audio", w: 200, h: 120, Icon: Mixer },
+  { key: "x32", label: "X32 Console", category: "Audio", w: 220, h: 150, Icon: X32Console },
+  { key: "digitalsnake", label: "Digital Snake / IO / DI Boxes", category: "Audio", w: 150, h: 150, Icon: DigitalSnake },
   // people
   { key: "person", label: "Musician", category: "People", w: 60, h: 110, Icon: Person },
   { key: "singer", label: "Singer", category: "People", w: 90, h: 110, Icon: Singer },
