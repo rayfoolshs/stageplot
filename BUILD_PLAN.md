@@ -414,9 +414,10 @@ remaps with no per-component rewrites.
 
 ### 15.5 Mixing-desk input list
 An editable input list is pinned below the stage (and will print with the rider):
-columns **Channel · Instrument · Person · Microphone · Monitor FB · DCA/Subgroup ·
-Notes**, with add/remove rows and auto-numbering. Backed by `StageDoc.channels`;
-`person`, `monitor` and `dca` were added to `ChannelRow`.
+columns **Channel · Instrument · Person · Input type · Microphone · Monitor FB ·
+DCA/Subgroup · Notes**, with add/remove rows and auto-numbering. "Input type" is a
+dropdown (Mic / DI / Line / Wireless). Backed by `StageDoc.channels`; `person`,
+`monitor`, `dca` and `inputType` were added to `ChannelRow`.
 
 ### 15.6 Fixes
 - Delete / Backspace removes the selected item / text / shape.

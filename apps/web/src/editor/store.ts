@@ -33,6 +33,7 @@ function emptyChannel(number: number): ChannelRow {
     source: "",
     person: "",
     mic: "",
+    inputType: "",
     stand: "",
     phantom: "",
     monitor: "",

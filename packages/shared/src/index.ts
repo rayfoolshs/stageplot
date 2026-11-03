@@ -71,6 +71,7 @@ export const ChannelRowSchema = z.object({
   source: z.string(),
   person: z.string().default(""),
   mic: z.string(),
+  inputType: z.string().default(""),
   stand: z.string(),
   phantom: z.string(),
   monitor: z.string().default(""),

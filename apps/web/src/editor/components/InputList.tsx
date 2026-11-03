@@ -4,7 +4,8 @@ import { useEditorStore } from "../store";
 const cell =
   "w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-neutral-100 focus:border-sky-500 focus:outline-none";
 
-type Field = "source" | "person" | "mic" | "monitor" | "dca" | "notes";
+type Field = "source" | "person" | "inputType" | "mic" | "monitor" | "dca" | "notes";
+const INPUT_TYPES = ["Mic", "DI", "Line", "Wireless"];
 
 export function InputList() {
   const rows = useEditorStore((s) => s.doc.channels);
@@ -13,6 +14,7 @@ export function InputList() {
   const columns: { key: Field; label: string; className: string }[] = [
     { key: "source", label: "Instrument", className: "min-w-[9rem]" },
     { key: "person", label: "Person", className: "min-w-[7rem]" },
+    { key: "inputType", label: "Input type", className: "min-w-[7rem]" },
     { key: "mic", label: "Microphone", className: "min-w-[9rem]" },
     { key: "monitor", label: "Monitor FB", className: "min-w-[7rem]" },
     { key: "dca", label: "DCA / Subgroup", className: "min-w-[7rem]" },
@@ -61,13 +63,30 @@ export function InputList() {
                   </td>
                   {columns.map((c) => (
                     <td key={c.key} className="px-1 py-1">
-                      <input
-                        className={cell}
-                        value={row[c.key]}
-                        onChange={(e) =>
-                          update("channels", row.id, { [c.key]: e.target.value } as Partial<ChannelRow>)
-                        }
-                      />
+                      {c.key === "inputType" ? (
+                        <select
+                          className={cell}
+                          value={row.inputType}
+                          onChange={(e) =>
+                            update("channels", row.id, { inputType: e.target.value })
+                          }
+                        >
+                          <option value="">—</option>
+                          {INPUT_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          className={cell}
+                          value={row[c.key]}
+                          onChange={(e) =>
+                            update("channels", row.id, { [c.key]: e.target.value } as Partial<ChannelRow>)
+                          }
+                        />
+                      )}
                     </td>
                   ))}
                   <td className="px-1 text-center">
