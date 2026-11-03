@@ -3,8 +3,12 @@
 **Build stage plots and technical riders for live music — right in the browser.**
 
 StagePlot lets musicians, sound techs and producers lay out a stage, build a
-mixing-desk input list, and (soon) export a clean PDF rider. Built from scratch
-with a fast, keyboard-friendly editor.
+mixing-desk input list, and export a clean PDF rider. Built from scratch with a
+fast, keyboard-friendly editor.
+
+> **Live demo:** [rayfoolshs.github.io/stageplot](https://rayfoolshs.github.io/stageplot/)
+> — static build: editor, local drafts and browser-print PDF. Accounts, cloud
+> save and sharing need the API (see [Deploying](#deploying-the-static-demo-github-pages)).
 
 > **Note:** This is an independent implementation. It is not affiliated with,
 > endorsed by, or derived from Ridermaker. All artwork, code and copy here are
