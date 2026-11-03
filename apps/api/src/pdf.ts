@@ -84,9 +84,8 @@ export function renderPdf(doc: StageDoc): Promise<Buffer> {
       await page.goto(PRINT_URL, { waitUntil: "networkidle0", timeout: 30_000 });
       await page.waitForSelector('[data-print-ready="1"]', { timeout: 15_000 });
 
+      // Orientation and margins come from the print sheet's @page rule.
       const pdf = await page.pdf({
-        format: "A4",
-        landscape: doc.meta.orientation === "landscape",
         printBackground: true,
         preferCSSPageSize: true,
       });

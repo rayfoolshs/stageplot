@@ -499,6 +499,10 @@ dropdown (Mic / DI / Line / Wireless). Backed by `StageDoc.channels`; `person`,
 - Autosave skipped the first edit after opening a document (the skip flag was
   set before the subscription existed). Autosave now ignores the loaded document
   object itself, so the first real edit persists — local drafts and cloud riders.
+- Print output was clipped to one page (fixed-height sheet, `overflow: hidden`).
+  The sheet now flows onto continuation pages with repeated table headers, and
+  the stage height scales with the row count so typical riders stay on page 1
+  (landscape ~10 inputs, portrait ~20; longer riders continue).
 
 ### 15.7 PDF export (M2)
 - **One layout source.** `apps/web/src/print/PrintSheet.tsx` renders the rider

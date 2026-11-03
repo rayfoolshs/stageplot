@@ -106,22 +106,23 @@ body,
 
 .print-sheet {
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 4mm;
+  /* Block layout, not a fixed-height box: long riders must flow onto more
+     pages instead of being clipped. The page margins come from @page in print. */
+  display: block;
   width: 297mm;
-  height: 210mm;
+  min-height: 210mm;
   padding: 10mm;
   background: #fff;
   color: #111827;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .print-sheet.portrait {
   width: 210mm;
-  height: 297mm;
+  min-height: 297mm;
 }
 
 .print-head {
@@ -131,6 +132,8 @@ body,
   gap: 8mm;
   border-bottom: 1.5px solid #111827;
   padding-bottom: 2mm;
+  margin-bottom: 4mm;
+  break-inside: avoid;
 }
 
 .print-head h1 {
@@ -159,11 +162,16 @@ body,
 }
 
 .print-stage {
-  flex: 1 1 auto;
-  min-height: 55mm;
+  height: 90mm;
+  margin-bottom: 4mm;
   display: flex;
   align-items: center;
   justify-content: center;
+  break-inside: avoid;
+}
+
+.print-sheet.portrait .print-stage {
+  height: 120mm;
 }
 
 .print-stage-svg {
@@ -173,11 +181,12 @@ body,
 }
 
 .print-block {
-  flex: 0 0 auto;
+  margin-bottom: 3mm;
 }
 
 .print-block h2 {
-  margin: 0 0 1.5mm;
+  margin: 0 0 1.2mm;
+  break-after: avoid;
   font-size: 7.5pt;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -198,7 +207,7 @@ body,
 .print-table th,
 .print-table td {
   border: 0.5px solid #d1d5db;
-  padding: 1mm 1.4mm;
+  padding: 0.8mm 1.4mm;
   text-align: left;
   vertical-align: top;
   overflow: hidden;
@@ -223,11 +232,20 @@ body,
 }
 
 .print-table td {
-  height: 4.6mm;
+  height: 4.2mm;
 }
 
 .print-table tbody tr:nth-child(even) {
   background: #fafafa;
+}
+
+/* Repeat the header on continuation pages and never split a row. */
+.print-table thead {
+  display: table-header-group;
+}
+
+.print-table tr {
+  break-inside: avoid;
 }
 
 .print-empty {
@@ -237,15 +255,16 @@ body,
 }
 
 .print-foot {
-  margin-top: auto;
+  margin-top: 2mm;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 6mm;
   border-top: 0.5px solid #d1d5db;
-  padding-top: 2mm;
-  font-size: 8pt;
+  padding-top: 1.5mm;
+  font-size: 7.5pt;
   color: #374151;
+  break-inside: avoid;
 }
 
 .print-foot p {
@@ -274,7 +293,11 @@ body,
     display: none;
   }
 
-  .print-sheet {
+  .print-sheet,
+  .print-sheet.portrait {
+    width: auto;
+    min-height: 0;
+    padding: 0;
     box-shadow: none;
   }
 }

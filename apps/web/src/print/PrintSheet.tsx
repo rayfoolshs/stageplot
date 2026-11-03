@@ -9,9 +9,16 @@ import { getLibraryItem } from "../editor/library";
 export function PrintSheet({ doc }: { doc: StageDoc }) {
   const portrait = doc.meta.orientation === "portrait";
 
+  // Give the stage as much room as the lists can spare: short riders get a big
+  // plot, longer ones shrink it so they still fit one page before flowing over.
+  const rowCount = doc.channels.length + doc.outputs.length;
+  const stageHeight = portrait
+    ? Math.max(80, 130 - rowCount * 4)
+    : Math.max(60, 100 - rowCount * 4);
+
   return (
     <article className={`print-sheet ${portrait ? "portrait" : "landscape"}`}>
-      <style>{`@page { size: A4 ${portrait ? "portrait" : "landscape"}; margin: 0; }`}</style>
+      <style>{`@page { size: A4 ${portrait ? "portrait" : "landscape"}; margin: 10mm; }`}</style>
 
       <header className="print-head">
         <div>
@@ -25,7 +32,7 @@ export function PrintSheet({ doc }: { doc: StageDoc }) {
         </div>
       </header>
 
-      <div className="print-stage">
+      <div className="print-stage" style={{ height: `${stageHeight}mm` }}>
         <StageSvg doc={doc} />
       </div>
 

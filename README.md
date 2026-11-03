@@ -48,7 +48,8 @@ server-side PDF) run locally with `dev:api`.
 - Output list for monitors / in-ears
 - **PDF export** — one-click download via a headless-Chrome render of the same
   `/print` layout (portrait or landscape); falls back to the browser's print
-  dialog if the API isn't running
+  dialog if the API isn't running. Long riders paginate cleanly, with the input
+  table header repeated on continuation pages.
 
 **Accounts**
 - Register / sign in / sign out with an httpOnly session cookie
