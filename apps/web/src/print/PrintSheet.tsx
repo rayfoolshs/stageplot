@@ -122,6 +122,18 @@ export function StageSvg({ doc }: { doc: StageDoc }) {
     >
       <rect x={0} y={0} width={width} height={height} fill="#ffffff" stroke={ink} strokeWidth={2} />
 
+      {doc.stage.background && (
+        <image
+          href={doc.stage.background}
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          preserveAspectRatio="xMidYMid meet"
+          opacity={doc.stage.backgroundOpacity ?? 1}
+        />
+      )}
+
       {doc.shapes.map((shape) => (
         <PrintShape key={shape.id} shape={shape} />
       ))}

@@ -88,6 +88,7 @@ export const StageDocSchema = z.object({
     width: z.number().positive(),
     height: z.number().positive(),
     background: z.string().optional(),
+    backgroundOpacity: z.number().min(0).max(1).optional(),
   }),
   items: z.array(StageItemSchema),
   texts: z.array(TextItemSchema),

@@ -34,6 +34,8 @@ server-side PDF) run locally with `dev:api`.
 - **Magnetic grid** — items snap to 25-unit cells while the grid is on (Alt = free)
 - **Resizable panels** — drag the dividers (double-click resets) to give the
   stage more room; sizes are remembered
+- **Background layer** — drop a top-down venue / floor-plan image *under* the
+  gear and fade it with an opacity slider, for tracing over an existing layout
 
 **Mixing-desk input list**
 - Editable table pinned below the stage with columns:

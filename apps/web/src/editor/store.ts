@@ -122,6 +122,7 @@ interface EditorState {
   // document
   setDoc: (doc: StageDoc) => void;
   setMeta: (patch: Partial<StageDoc["meta"]>) => void;
+  setStage: (patch: Partial<StageDoc["stage"]>) => void;
   setFooter: (text: string) => void;
   clearStage: () => void;
   clearDocument: () => void;
@@ -217,6 +218,11 @@ export const useEditorStore = create<EditorState>()(
     setMeta: (patch) =>
       set((state) => {
         Object.assign(state.doc.meta, patch);
+      }),
+
+    setStage: (patch) =>
+      set((state) => {
+        Object.assign(state.doc.stage, patch);
       }),
 
     setFooter: (text) =>

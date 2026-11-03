@@ -1,6 +1,8 @@
+import type { ChangeEvent } from "react";
 import type { Orientation } from "@stageplot/shared";
 import { getLibraryItem } from "../library";
 import { useEditorStore, useSelectedShape } from "../store";
+import { toast } from "../../ui/toast";
 
 const field =
   "w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-neutral-100 focus:border-sky-500 focus:outline-none";
@@ -18,6 +20,35 @@ export function InspectorPanel({ width = 320 }: { width?: number }) {
   const name = useEditorStore((s) => s.doc.meta.name);
   const orientation = useEditorStore((s) => s.doc.meta.orientation);
   const footer = useEditorStore((s) => s.doc.footer.text);
+  const background = useEditorStore((s) => s.doc.stage.background);
+  const backgroundOpacity = useEditorStore((s) => s.doc.stage.backgroundOpacity ?? 1);
+
+  function handleBackgroundFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Please choose an image file.", "error");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast("Image too large — please use one under 8 MB.", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        toast("Could not read that image.", "error");
+        return;
+      }
+      const store = useEditorStore.getState();
+      store.pushHistory();
+      store.setStage({ background: reader.result, backgroundOpacity: 1 });
+      toast("Background image added.", "success");
+    };
+    reader.onerror = () => toast("Could not read that image.", "error");
+    reader.readAsDataURL(file);
+  }
 
   const single = selection.length === 1;
   const lib = item ? getLibraryItem(item.itemKey) : undefined;
@@ -216,6 +247,63 @@ export function InspectorPanel({ width = 320 }: { width?: number }) {
             <option value="landscape">Landscape</option>
             <option value="portrait">Portrait</option>
           </select>
+        </div>
+        <div>
+          <label className={label}>Background layout</label>
+          {background ? (
+            <div className="space-y-2">
+              <img
+                src={background}
+                alt="Background layout preview"
+                className="max-h-24 w-full rounded border border-neutral-800 object-contain"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wide text-neutral-500">
+                  Opacity
+                </span>
+                <input
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={Math.round(backgroundOpacity * 100)}
+                  onChange={(e) =>
+                    useEditorStore
+                      .getState()
+                      .setStage({ backgroundOpacity: Number(e.target.value) / 100 })
+                  }
+                  className="flex-1 accent-sky-500"
+                />
+                <span className="w-9 text-right text-[10px] text-neutral-500">
+                  {Math.round(backgroundOpacity * 100)}%
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const store = useEditorStore.getState();
+                  store.pushHistory();
+                  store.setStage({ background: undefined, backgroundOpacity: undefined });
+                }}
+                className="w-full rounded border border-neutral-700 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800"
+              >
+                Remove image
+              </button>
+            </div>
+          ) : (
+            <label className="flex cursor-pointer items-center justify-center rounded border border-dashed border-neutral-700 px-2 py-2 text-xs text-neutral-400 hover:border-sky-600 hover:text-neutral-200">
+              Choose image…
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBackgroundFile}
+              />
+            </label>
+          )}
+          <p className="mt-1 text-[10px] text-neutral-500">
+            Sits under the stage items — handy for tracing a venue's top-down plan.
+          </p>
         </div>
         <div>
           <label className={label}>Footer / notes</label>

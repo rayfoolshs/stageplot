@@ -248,6 +248,15 @@ export function Canvas() {
           backgroundSize: showGrid ? `${cell}px ${cell}px` : undefined,
         }}
       >
+        {doc.stage.background && (
+          <img
+            src={doc.stage.background}
+            alt="Background layout"
+            draggable={false}
+            className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+            style={{ opacity: doc.stage.backgroundOpacity ?? 1 }}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0">
           {doc.shapes.map((shape) => (
             <ShapeNode
