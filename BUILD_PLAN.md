@@ -298,19 +298,19 @@ Autosave: debounce PUT `/api/riders/:id` ~1.5s after edits.
 
 ## 12. Milestones
 
-### M0 — Foundations
-- [ ] npm workspaces monorepo, `apps/web`, `apps/api`, `packages/shared`
-- [ ] `StageDoc` types + zod schema in `shared`
-- [ ] Vite React + TS app boots; Fastify + Prisma + Postgres connects
-- [ ] CI-lite: lint + typecheck + test scripts
+### M0 — Foundations ✅ (done)
+- [x] npm workspaces monorepo, `apps/web`, `apps/api`, `packages/shared`
+- [x] `StageDoc` types + zod schema in `shared`
+- [x] Vite React + TS app boots; Fastify + Prisma + SQLite connects
+- [x] Typecheck + build scripts at the workspace root
 
-### M1 — Editor core (no backend)
-- [ ] Static item library with a handful of our SVGs across categories
-- [ ] Canvas: drop, select, move, resize, rotate, flip, layer
-- [ ] Zustand store with undo/redo
-- [ ] Channel list + output list tables
-- [ ] Footer/orientation controls
-- [ ] Save/load doc to `localStorage`
+### M1 — Editor core (no backend) ✅ (done)
+- [x] Static item library (19 items) with our own SVGs across categories
+- [x] Canvas: drop, select, move, resize, rotate, flip, layer
+- [x] Zustand store with undo/redo (JSON deep-clone snapshots)
+- [x] Channel list + output list tables
+- [x] Footer / orientation controls
+- [x] Save/load doc to localStorage (debounced autosave)
 
 ### M2 — PDF export
 - [ ] `/print` read-only render route

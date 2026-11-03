@@ -1,0 +1,109 @@
+import { createEmptyDoc } from "@stageplot/shared";
+import { useEditorStore } from "../store";
+import { clearDraft } from "../persistence";
+
+function ToolButton({
+  label,
+  title,
+  onClick,
+  disabled,
+  active,
+}: {
+  label: string;
+  title: string;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-md px-2.5 py-1.5 text-sm transition ${
+        active
+          ? "bg-sky-500 text-white"
+          : "bg-neutral-800 text-neutral-200 hover:bg-neutral-700"
+      } disabled:cursor-not-allowed disabled:opacity-40`}
+    >
+      {label}
+    </button>
+  );
+}
+
+const Divider = () => <span className="mx-1 h-5 w-px bg-neutral-800" />;
+
+export function Toolbar() {
+  const scale = useEditorStore((s) => s.scale);
+  const showGrid = useEditorStore((s) => s.showGrid);
+  const selection = useEditorStore((s) => s.selection);
+  const canUndo = useEditorStore((s) => s.past.length > 0);
+  const canRedo = useEditorStore((s) => s.future.length > 0);
+  const hasSelection = selection.length > 0;
+
+  const store = useEditorStore;
+
+  return (
+    <header className="flex flex-wrap items-center gap-1 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
+      <span className="mr-2 text-sm font-semibold tracking-wide">StagePlot</span>
+
+      <ToolButton label="↶" title="Undo (Ctrl+Z)" onClick={() => store.getState().undo()} disabled={!canUndo} />
+      <ToolButton label="↷" title="Redo (Ctrl+Shift+Z)" onClick={() => store.getState().redo()} disabled={!canRedo} />
+
+      <Divider />
+
+      <ToolButton label="⟲ 15°" title="Rotate -15°" onClick={() => store.getState().rotateSelected(-15)} disabled={!hasSelection} />
+      <ToolButton label="⟳ 15°" title="Rotate +15°" onClick={() => store.getState().rotateSelected(15)} disabled={!hasSelection} />
+      <ToolButton label="Flip H" title="Flip horizontally" onClick={() => store.getState().flipSelected("x")} disabled={!hasSelection} />
+      <ToolButton label="Flip V" title="Flip vertically" onClick={() => store.getState().flipSelected("y")} disabled={!hasSelection} />
+
+      <Divider />
+
+      <ToolButton label="Front" title="Bring to front" onClick={() => store.getState().layer("front")} disabled={!hasSelection} />
+      <ToolButton label="Fwd" title="Bring forward" onClick={() => store.getState().layer("forward")} disabled={!hasSelection} />
+      <ToolButton label="Back" title="Send backward" onClick={() => store.getState().layer("backward")} disabled={!hasSelection} />
+      <ToolButton label="Bottom" title="Send to back" onClick={() => store.getState().layer("back")} disabled={!hasSelection} />
+
+      <Divider />
+
+      <ToolButton label="Duplicate" title="Duplicate (Ctrl+D)" onClick={() => store.getState().duplicateSelected()} disabled={!hasSelection} />
+      <ToolButton label="Delete" title="Delete (Del)" onClick={() => store.getState().removeSelected()} disabled={!hasSelection} />
+      <ToolButton
+        label="Add text"
+        title="Add a text label"
+        onClick={() => {
+          const s = store.getState();
+          s.addText(40, 40);
+        }}
+      />
+
+      <Divider />
+
+      <ToolButton label="−" title="Zoom out" onClick={() => store.getState().setScale(scale - 0.1)} />
+      <span className="w-12 text-center text-xs text-neutral-400">{Math.round(scale * 100)}%</span>
+      <ToolButton label="+" title="Zoom in" onClick={() => store.getState().setScale(scale + 0.1)} />
+      <ToolButton label="Grid" title="Toggle grid" active={showGrid} onClick={() => store.getState().toggleGrid()} />
+
+      <div className="ml-auto flex items-center gap-1">
+        <ToolButton
+          label="New"
+          title="Start a new rider"
+          onClick={() => {
+            if (!confirm("Start a new rider? Unsaved changes are lost.")) return;
+            clearDraft();
+            store.getState().setDoc(createEmptyDoc());
+          }}
+        />
+        <button
+          type="button"
+          title="PDF export arrives in M2"
+          onClick={() => alert("PDF export is coming in milestone M2.")}
+          className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+        >
+          Export PDF
+        </button>
+      </div>
+    </header>
+  );
+}

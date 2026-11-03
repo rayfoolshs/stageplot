@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@stageplot/shared": "*",
+    "@tailwindcss/vite": "^4.3.4",
+    "immer": "^11.2.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tailwindcss": "^4.3.4",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
