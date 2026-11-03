@@ -5,8 +5,8 @@ import { getLibraryItem } from "../library";
 import { useEditorStore } from "../store";
 
 const MIN_SIZE = 12;
-const SHAPE_STROKE = "#a78bfa";
-const SHAPE_STROKE_SELECTED = "#c4b5fd";
+const SHAPE_STROKE = "var(--canvas-shape)";
+const SHAPE_STROKE_SELECTED = "var(--canvas-shape-selected)";
 const SHAPE_FILL = "rgba(167,139,250,0.18)";
 
 /** Drop focus from an inspector field so keyboard shortcuts act on the canvas. */
@@ -234,7 +234,9 @@ export function Canvas() {
                     left: (item.x + item.w / 2) * scale,
                     top: (item.y + item.h) * scale + 2,
                     fontSize: Math.max(8, 12 * scale),
-                    color: selection.includes(item.id) ? "#7dd3fc" : "#cbd5e1",
+                    color: selection.includes(item.id)
+                      ? "var(--canvas-item-selected)"
+                      : "var(--canvas-label)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -253,7 +255,9 @@ export function Canvas() {
                     left: (shape.x + shape.w / 2) * scale,
                     top: (shape.y + shape.h) * scale + 2,
                     fontSize: Math.max(8, 12 * scale),
-                    color: selection.includes(shape.id) ? "#c4b5fd" : "#cbd5e1",
+                    color: selection.includes(shape.id)
+                      ? "var(--canvas-shape-selected)"
+                      : "var(--canvas-label)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -289,12 +293,12 @@ export function Canvas() {
                 ...(hover ? [`${hover.x},${hover.y}`] : []),
               ].join(" ")}
               fill="rgba(167,139,250,0.12)"
-              stroke="#a78bfa"
+              stroke="var(--canvas-shape)"
               strokeWidth={2}
               strokeDasharray="6 4"
             />
             {polyPoints.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r={4} fill="#c4b5fd" />
+              <circle key={i} cx={p.x} cy={p.y} r={4} fill="var(--canvas-shape-selected)" />
             ))}
           </svg>
         )}
@@ -507,7 +511,7 @@ function ShapeNode({
                 cx={rx * scale}
                 cy={ry * scale}
                 r={6}
-                fill="#c4b5fd"
+                fill="var(--canvas-shape-selected)"
                 stroke="#312e81"
                 strokeWidth={1.5}
                 style={{ pointerEvents: "all", cursor: "pointer" }}
@@ -585,7 +589,7 @@ function StageItemNode({
           item.flipY ? -1 : 1
         })`,
         transformOrigin: "center",
-        color: selected ? "#7dd3fc" : "#cbd5e1",
+        color: selected ? "var(--canvas-item-selected)" : "var(--canvas-item)",
         pointerEvents: enabled ? "auto" : "none",
       }}
     >
@@ -668,7 +672,7 @@ function TextNode({
         fontSize: text.fontSize * scale,
         transform: `rotate(${text.rotation}deg)`,
         transformOrigin: "center",
-        color: selected ? "#7dd3fc" : "#e2e8f0",
+        color: selected ? "var(--canvas-item-selected)" : "var(--canvas-text)",
         whiteSpace: "nowrap",
         pointerEvents: enabled ? "auto" : "none",
       }}

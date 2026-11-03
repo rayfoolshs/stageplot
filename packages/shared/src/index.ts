@@ -20,6 +20,8 @@ export const StageItemSchema = z.object({
   flipX: z.boolean(),
   flipY: z.boolean(),
   label: z.string().optional(),
+  /** For stage monitors: the desk output row this item feeds. */
+  outputId: z.string().optional(),
 });
 export type StageItem = z.infer<typeof StageItemSchema>;
 
@@ -136,6 +138,7 @@ export const LIBRARY_CATEGORIES = [
   "People",
   "Stages",
   "Lighting",
+  "Video",
   "Text",
 ] as const;
 export type LibraryCategory = (typeof LIBRARY_CATEGORIES)[number];

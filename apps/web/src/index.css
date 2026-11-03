@@ -3,6 +3,13 @@
 :root {
   color-scheme: dark;
   --grid-line: rgba(255, 255, 255, 0.05);
+  /* Canvas ink: item artwork, drawn shapes, text and labels. */
+  --canvas-item: #cbd5e1;
+  --canvas-item-selected: #7dd3fc;
+  --canvas-text: #e2e8f0;
+  --canvas-shape: #a78bfa;
+  --canvas-shape-selected: #c4b5fd;
+  --canvas-label: #cbd5e1;
 }
 
 /*
@@ -13,6 +20,13 @@
 html.light {
   color-scheme: light;
   --grid-line: rgba(0, 0, 0, 0.06);
+  /* Darker ink so artwork keeps its contrast on a white stage. */
+  --canvas-item: #3f3f46;
+  --canvas-item-selected: #0369a1;
+  --canvas-text: #27272a;
+  --canvas-shape: #6d28d9;
+  --canvas-shape-selected: #7c3aed;
+  --canvas-label: #3f3f46;
   --color-neutral-950: #ffffff;
   --color-neutral-900: #f4f4f5;
   --color-neutral-800: #e4e4e7;

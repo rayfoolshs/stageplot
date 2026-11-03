@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import type { ChannelRow } from "@stageplot/shared";
 import { useEditorStore } from "../store";
+import { ChannelTable } from "./ChannelTable";
 
 const cell =
   "w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-neutral-100 focus:border-sky-500 focus:outline-none";
@@ -7,9 +9,20 @@ const cell =
 type Field = "source" | "person" | "inputType" | "mic" | "monitor" | "dca" | "notes";
 const INPUT_TYPES = ["Mic", "DI", "Line", "Wireless"];
 
-export function InputList() {
+export function InputList({ height = 224 }: { height?: number }) {
   const rows = useEditorStore((s) => s.doc.channels);
+  const outputs = useEditorStore((s) => s.doc.outputs);
   const update = useEditorStore((s) => s.updateChannel);
+
+  // Monitor FB choices come from the monitors / IEM on the plot.
+  const monitorNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const output of outputs) {
+      const name = output.source.trim();
+      if (name) names.add(name);
+    }
+    return [...names];
+  }, [outputs]);
 
   const columns: { key: Field; label: string; className: string }[] = [
     { key: "source", label: "Instrument", className: "min-w-[9rem]" },
@@ -22,22 +35,26 @@ export function InputList() {
   ];
 
   return (
-    <section className="flex h-56 shrink-0 flex-col border-t border-neutral-800 bg-neutral-900">
-      <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-1.5">
-        <h2 className="text-xs font-semibold tracking-wide text-neutral-300">
-          Mixing desk — input list
-          <span className="ml-2 font-normal text-neutral-500">{rows.length} channels</span>
-        </h2>
-        <button
-          type="button"
-          onClick={() => useEditorStore.getState().addChannel("channels")}
-          className="rounded bg-neutral-800 px-2.5 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
-        >
-          + Add channel
-        </button>
-      </div>
+    <section
+      className="flex shrink-0 border-t border-neutral-800 bg-neutral-900"
+      style={{ height }}
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center justify-between border-b border-neutral-800 px-3 py-1.5">
+          <h2 className="whitespace-nowrap text-xs font-semibold tracking-wide text-neutral-300">
+            Input list
+            <span className="ml-2 font-normal text-neutral-500">{rows.length} channels</span>
+          </h2>
+          <button
+            type="button"
+            onClick={() => useEditorStore.getState().addChannel("channels")}
+            className="ml-2 shrink-0 whitespace-nowrap rounded bg-neutral-800 px-2.5 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
+          >
+            + Add channel
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto">
         {rows.length === 0 ? (
           <p className="p-3 text-xs text-neutral-500">
             No channels yet. Add one, or describe the desk here.
@@ -63,7 +80,24 @@ export function InputList() {
                   </td>
                   {columns.map((c) => (
                     <td key={c.key} className="px-1 py-1">
-                      {c.key === "inputType" ? (
+                      {c.key === "monitor" ? (
+                        <select
+                          className={cell}
+                          value={row.monitor}
+                          onChange={(e) => update("channels", row.id, { monitor: e.target.value })}
+                        >
+                          <option value="">—</option>
+                          {monitorNames.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                          {/* Keep a stored value that no longer exists on the plot. */}
+                          {row.monitor && !monitorNames.includes(row.monitor) && (
+                            <option value={row.monitor}>{row.monitor}</option>
+                          )}
+                        </select>
+                      ) : c.key === "inputType" ? (
                         <select
                           className={cell}
                           value={row.inputType}
@@ -104,7 +138,12 @@ export function InputList() {
             </tbody>
           </table>
         )}
+        </div>
       </div>
+
+      <aside className="flex w-72 shrink-0 flex-col border-l border-neutral-800 p-2">
+        <ChannelTable kind="outputs" title="Monitors / outputs" />
+      </aside>
     </section>
   );
 }

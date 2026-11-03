@@ -19,6 +19,8 @@ function ToolButton({
     <button
       type="button"
       title={title}
+      aria-label={title}
+      aria-pressed={active}
       onClick={onClick}
       disabled={disabled}
       className={`rounded-md px-2.5 py-1.5 text-sm transition ${
@@ -99,7 +101,7 @@ export function Toolbar() {
       <div className="ml-auto flex items-center gap-1">
         <ToolButton
           label={theme === "dark" ? "☾" : "☀"}
-          title="Toggle light / dark mode"
+          title={theme === "dark" ? "Dark mode — switch to light" : "Light mode — switch to dark"}
           onClick={() => store.getState().toggleTheme()}
         />
         <ToolButton

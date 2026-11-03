@@ -21,6 +21,60 @@ export function newId(prefix = "el"): string {
   return `${prefix}_${Date.now().toString(36)}_${idCounter}`;
 }
 
+/**
+ * The theme to start with: the last explicit choice, otherwise light. Resolved
+ * once at store creation so the initial render already has the right value (an
+ * effect that corrects it later would flash and, worse, persist the wrong theme
+ * on the way through). The versioned key lets older auto-saved values — which
+ * could be dark from the OS default — be ignored.
+ */
+export function initialTheme(): Theme {
+  try {
+    const saved = localStorage.getItem("stageplot:theme:v2");
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    /* storage unavailable — fall through to the default */
+  }
+  return "light";
+}
+
+/**
+ * Items that stand for a monitor mix and therefore own a row in the desk's
+ * output list. Adding one auto-names it "Monitor N" and links the two so the
+ * caption on the plot and the desk row stay in sync.
+ */
+const MONITOR_ITEM_KEYS = new Set(["monitor"]);
+
+/** Highest `Monitor N` number already on the plot (0 when there are none). */
+function lastMonitorNumber(items: readonly StageItem[]): number {
+  let highest = 0;
+  for (const item of items) {
+    if (!MONITOR_ITEM_KEYS.has(item.itemKey)) continue;
+    const match = /^Monitor (\d+)$/.exec(item.label ?? "");
+    if (match) highest = Math.max(highest, Number(match[1]));
+  }
+  return highest;
+}
+
+/** Keep channel `Monitor FB` choices pointing at the renamed monitor. */
+function renameMonitorRefs(doc: StageDoc, from: string, to: string): void {
+  if (!from || from === to) return;
+  for (const row of doc.channels) {
+    if (row.monitor === from) row.monitor = to;
+  }
+}
+
+/** Name `item` as the next monitor and append its matching desk row. */
+function attachMonitorRow(doc: StageDoc, item: StageItem, number: number): void {
+  const label = `Monitor ${number}`;
+  const row = emptyChannel(doc.outputs.length + 1);
+  row.source = label;
+  row.notes = "Stage monitor";
+  doc.outputs.push(row);
+  item.label = label;
+  item.outputId = row.id;
+}
+
 const HISTORY_LIMIT = 100;
 // The document is plain JSON-serializable data, so a JSON deep-clone is both
 // safe and works on immer draft proxies (structuredClone cannot clone drafts).
@@ -105,7 +159,7 @@ export const useEditorStore = create<EditorState>()(
     showGrid: true,
     showLabels: true,
     tool: "select",
-    theme: "dark",
+    theme: initialTheme(),
     past: [],
     future: [],
 
@@ -171,6 +225,9 @@ export const useEditorStore = create<EditorState>()(
           flipY: false,
           label: item.label,
         };
+        if (MONITOR_ITEM_KEYS.has(item.key)) {
+          attachMonitorRow(state.doc, el, lastMonitorNumber(state.doc.items) + 1);
+        }
         state.doc.items.push(el);
         state.selection = [el.id];
       }),
@@ -194,7 +251,15 @@ export const useEditorStore = create<EditorState>()(
     updateItem: (id, patch) =>
       set((state) => {
         const el = state.doc.items.find((i) => i.id === id);
-        if (el) Object.assign(el, patch);
+        if (!el) return;
+        const previousLabel = el.label ?? "";
+        Object.assign(el, patch);
+        // A renamed monitor keeps its desk row and its channel refs in step.
+        if (el.outputId && patch.label !== undefined) {
+          const row = state.doc.outputs.find((o) => o.id === el.outputId);
+          if (row) row.source = patch.label;
+          renameMonitorRefs(state.doc, previousLabel, patch.label);
+        }
       }),
 
     updateText: (id, patch) =>
@@ -263,9 +328,20 @@ export const useEditorStore = create<EditorState>()(
         state.past.push(clone(state.doc));
         state.future = [];
         const sel = new Set(state.selection);
+        // Deleting a monitor also drops its desk row.
+        const orphanRows = new Set(
+          state.doc.items
+            .filter((i) => sel.has(i.id) && i.outputId)
+            .map((i) => i.outputId as string),
+        );
         state.doc.items = state.doc.items.filter((i) => !sel.has(i.id));
         state.doc.texts = state.doc.texts.filter((t) => !sel.has(t.id));
         state.doc.shapes = state.doc.shapes.filter((sh) => !sel.has(sh.id));
+        if (orphanRows.size > 0) {
+          state.doc.outputs = state.doc.outputs
+            .filter((o) => !orphanRows.has(o.id))
+            .map((o, index) => ({ ...o, number: index + 1 }));
+        }
         state.selection = [];
       }),
 
@@ -276,10 +352,16 @@ export const useEditorStore = create<EditorState>()(
         state.future = [];
         const sel = state.selection;
         const newIds: string[] = [];
+        let nextMonitor = lastMonitorNumber(state.doc.items) + 1;
         const itemCopies = state.doc.items
           .filter((i) => sel.includes(i.id))
           .map((i) => {
-            const copy = { ...i, id: newId("it"), x: i.x + 24, y: i.y + 24 };
+            const copy: StageItem = { ...i, id: newId("it"), x: i.x + 24, y: i.y + 24 };
+            // A copied monitor is a new mix: number it and add its own row.
+            if (MONITOR_ITEM_KEYS.has(i.itemKey)) {
+              attachMonitorRow(state.doc, copy, nextMonitor);
+              nextMonitor += 1;
+            }
             newIds.push(copy.id);
             return copy;
           });
@@ -414,7 +496,16 @@ export const useEditorStore = create<EditorState>()(
     updateChannel: (kind, id, patch) =>
       set((state) => {
         const row = state.doc[kind].find((c) => c.id === id);
-        if (row) Object.assign(row, patch);
+        if (!row) return;
+        const previousSource = row.source;
+        Object.assign(row, patch);
+        // Renaming a monitor row retitles its item on the plot and any channel
+        // that already feeds it.
+        if (kind === "outputs" && patch.source !== undefined) {
+          const linked = state.doc.items.find((i) => i.outputId === id);
+          if (linked) linked.label = patch.source;
+          renameMonitorRefs(state.doc, previousSource, patch.source);
+        }
       }),
 
     removeChannel: (kind, id) =>
@@ -424,6 +515,12 @@ export const useEditorStore = create<EditorState>()(
         state.doc[kind] = state.doc[kind]
           .filter((c) => c.id !== id)
           .map((c, index) => ({ ...c, number: index + 1 }));
+        // The item stays on the plot, it just no longer has a desk row.
+        if (kind === "outputs") {
+          for (const item of state.doc.items) {
+            if (item.outputId === id) item.outputId = undefined;
+          }
+        }
       }),
 
     setScale: (scale) =>

@@ -1,13 +1,12 @@
 import type { Orientation } from "@stageplot/shared";
 import { getLibraryItem } from "../library";
 import { useEditorStore, useSelectedShape } from "../store";
-import { ChannelTable } from "./ChannelTable";
 
 const field =
   "w-full rounded border border-neutral-800 bg-neutral-950 px-2 py-1 text-sm text-neutral-100 focus:border-sky-500 focus:outline-none";
 const label = "text-[11px] uppercase tracking-wide text-neutral-500";
 
-export function InspectorPanel() {
+export function InspectorPanel({ width = 320 }: { width?: number }) {
   const selection = useEditorStore((s) => s.selection);
   const item = useEditorStore((s) =>
     s.doc.items.find((i) => i.id === s.selection[0]),
@@ -24,7 +23,10 @@ export function InspectorPanel() {
   const lib = item ? getLibraryItem(item.itemKey) : undefined;
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col gap-4 overflow-auto border-l border-neutral-800 bg-neutral-900 p-3">
+    <aside
+      className="flex shrink-0 flex-col gap-4 overflow-auto border-l border-neutral-800 bg-neutral-900 p-3"
+      style={{ width }}
+    >
       {single && (item || text || shape) && (
         <section className="space-y-2">
           <h2 className="text-xs font-semibold text-neutral-300">
@@ -229,10 +231,6 @@ export function InspectorPanel() {
         </div>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-neutral-300">Output lists</h2>
-        <ChannelTable kind="outputs" title="Outputs (monitors / IEM)" />
-      </section>
     </aside>
   );
 }

@@ -565,6 +565,36 @@ const MovingHead: Icon = () => (
   </g>
 );
 
+/* --- video --------------------------------------------------------------- */
+
+/** A single flat panel, front-on: bezel, screen, faint panel seams and a mount. */
+const LedTv: Icon = () => (
+  <g {...S}>
+    <rect x="3" y="26" width="94" height="54" rx="3" {...FILL} />
+    <rect x="8" y="31" width="84" height="44" rx="1.5" />
+    <path
+      d="M8 45.7 h84 M8 60.3 h84 M29 31 v44 M50 31 v44 M71 31 v44"
+      strokeWidth={0.9}
+      opacity={0.5}
+    />
+    {/* wall mount / stand */}
+    <path d="M43 80 v7 M57 80 v7" />
+    <rect x="33" y="87" width="34" height="6" rx="2" {...SOLID} />
+  </g>
+);
+
+/** A tiled video wall: several panels joined into one large surface. */
+const VideoWall: Icon = () => (
+  <g {...S}>
+    <rect x="2" y="16" width="96" height="62" rx="2" {...FILL} />
+    {/* panel seams: 3 x 3 tiles */}
+    <path d="M2 36.7 h96 M2 57.3 h96 M34 16 v62 M66 16 v62" strokeWidth={1.6} />
+    {/* frame mount */}
+    <rect x="26" y="82" width="48" height="6" rx="2" {...SOLID} />
+    <path d="M36 78 v4 M64 78 v4" />
+  </g>
+);
+
 /* --- catalog ------------------------------------------------------------- */
 
 export const LIBRARY_ITEMS: LibraryItem[] = [
@@ -622,6 +652,10 @@ export const LIBRARY_ITEMS: LibraryItem[] = [
   // lighting
   { key: "parcan", label: "Par can", category: "Lighting", w: 120, h: 120, Icon: ParCan },
   { key: "movinghead", label: "Moving head", category: "Lighting", w: 120, h: 120, Icon: MovingHead },
+  // video
+  { key: "ledtv", label: "LED TV panel (large)", category: "Video", w: 320, h: 180, Icon: LedTv },
+  { key: "ledtvsmall", label: "LED TV panel (small)", category: "Video", w: 160, h: 90, Icon: LedTv },
+  { key: "videowall", label: "LED video wall", category: "Video", w: 480, h: 300, Icon: VideoWall },
 ];
 
 export const LIBRARY_BY_KEY: Record<string, LibraryItem> = Object.fromEntries(

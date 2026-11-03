@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { LIBRARY_CATEGORIES } from "@stageplot/shared";
 import { LIBRARY_ITEMS, type LibraryItem } from "../library";
 
-export function LibraryPanel() {
+export function LibraryPanel({ width = 256 }: { width?: number }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
 
@@ -16,7 +16,10 @@ export function LibraryPanel() {
   }, [query, activeCategory]);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-neutral-800 bg-neutral-900">
+    <aside
+      className="flex shrink-0 flex-col border-r border-neutral-800 bg-neutral-900"
+      style={{ width }}
+    >
       <div className="border-b border-neutral-800 p-3">
         <input
           value={query}

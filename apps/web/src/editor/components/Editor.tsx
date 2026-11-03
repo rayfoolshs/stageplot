@@ -6,23 +6,32 @@ import { InspectorPanel } from "./InspectorPanel";
 import { InputList } from "./InputList";
 import { initialDoc, saveDraft } from "../persistence";
 import { useEditorStore } from "../store";
+import { Splitter, useStoredSize } from "./Splitter";
 
 export function Editor() {
   const theme = useEditorStore((s) => s.theme);
 
-  // Load the draft once on mount.
+  // Panel layout — remembered between visits.
+  const [libraryWidth, setLibraryWidth] = useStoredSize("stageplot:ui:library", 256, 180, 460);
+  const [inspectorWidth, setInspectorWidth] = useStoredSize("stageplot:ui:inspector", 320, 220, 560);
+  const [deskHeight, setDeskHeight] = useStoredSize("stageplot:ui:desk", 224, 120, 560);
+
+  // Load the draft once on mount. The theme starts out already resolved in the
+  // store — see `initialTheme`.
   useEffect(() => {
     useEditorStore.getState().setDoc(initialDoc());
-    const savedTheme = localStorage.getItem("stageplot:theme");
-    if (savedTheme === "light" || savedTheme === "dark") {
-      useEditorStore.getState().setTheme(savedTheme);
-    }
   }, []);
 
   // Apply + persist the theme.
   useEffect(() => {
-    document.documentElement.classList.toggle("light", theme === "light");
-    localStorage.setItem("stageplot:theme", theme);
+    const root = document.documentElement;
+    root.classList.toggle("light", theme === "light");
+    root.style.colorScheme = theme;
+    try {
+      localStorage.setItem("stageplot:theme:v2", theme);
+    } catch {
+      /* private mode / storage disabled: the theme just won't persist */
+    }
   }, [theme]);
 
   // Debounced autosave to localStorage whenever the document changes.
@@ -98,14 +107,43 @@ export function Editor() {
     <div className="flex h-full flex-col">
       <Toolbar />
       <div className="flex min-h-0 flex-1">
-        <LibraryPanel />
+        <LibraryPanel width={libraryWidth} />
+        <Splitter
+          orientation="vertical"
+          label="Resize item library"
+          value={libraryWidth}
+          onChange={setLibraryWidth}
+          min={180}
+          max={460}
+          reset={256}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="min-h-0 flex-1">
             <Canvas />
           </div>
-          <InputList />
+          <Splitter
+            orientation="horizontal"
+            label="Resize mixing desk"
+            value={deskHeight}
+            onChange={setDeskHeight}
+            min={120}
+            max={560}
+            invert
+            reset={224}
+          />
+          <InputList height={deskHeight} />
         </div>
-        <InspectorPanel />
+        <Splitter
+          orientation="vertical"
+          label="Resize inspector"
+          value={inspectorWidth}
+          onChange={setInspectorWidth}
+          min={220}
+          max={560}
+          invert
+          reset={320}
+        />
+        <InspectorPanel width={inspectorWidth} />
       </div>
     </div>
   );
