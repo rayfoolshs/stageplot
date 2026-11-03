@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
+    "@fastify/rate-limit": "^11.2.2",
     "@fastify/session": "^11.0.0",
+    "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.2.1",
     "@stageplot/shared": "*",
     "fastify": "^5.2.0",

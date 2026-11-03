@@ -3,6 +3,7 @@ import { createEmptyDoc } from "@stageplot/shared";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
 import { downloadPdf } from "../../lib/pdf";
+import { AccountMenu } from "../../auth/AccountMenu";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
 
@@ -118,6 +119,7 @@ export function Toolbar() {
       <ToolButton label="Labels" title="Show / hide item labels" active={showLabels} onClick={() => store.getState().toggleLabels()} />
 
       <div className="ml-auto flex items-center gap-1">
+        <AccountMenu />
         <ToolButton
           label={theme === "dark" ? "☾" : "☀"}
           title={theme === "dark" ? "Dark mode — switch to light" : "Light mode — switch to dark"}

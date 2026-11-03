@@ -1,25 +1,41 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import session from "@fastify/session";
+import rateLimit from "@fastify/rate-limit";
 import { createEmptyDoc, parseStageDoc } from "@stageplot/shared";
 import { closePdfRenderer, renderPdf } from "./pdf";
+import { authRoutes } from "./auth/routes";
 
 const PORT = Number(process.env.PORT ?? 3001);
+const IS_PROD = process.env.NODE_ENV === "production";
 const SESSION_SECRET =
   process.env.SESSION_SECRET ?? "dev-only-session-secret-please-change-32ch";
 
+if (IS_PROD && SESSION_SECRET.startsWith("dev-only")) {
+  throw new Error("Set a real SESSION_SECRET before running in production.");
+}
+
 const app = Fastify({ logger: true });
 
-// Sessions are wired now so M3 (accounts) has a foundation to build on.
+// In-memory session store is fine for dev; M4 swaps in a persistent store.
 await app.register(cookie);
 await app.register(session, {
   secret: SESSION_SECRET,
+  cookieName: "stageplot.sid",
+  saveUninitialized: false,
   cookie: {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // set true behind HTTPS in production
+    secure: IS_PROD, // requires HTTPS in production
+    path: "/",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   },
 });
+
+// Per-route limits (see auth routes); off by default elsewhere.
+await app.register(rateLimit, { global: false });
+
+await app.register(authRoutes);
 
 app.get("/api/health", async () => ({
   ok: true,
