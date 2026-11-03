@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createEmptyDoc } from "@stageplot/shared";
+import { createExampleDoc } from "../exampleDoc";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
 import { AccountMenu } from "../../auth/AccountMenu";
@@ -87,6 +87,7 @@ export function Toolbar() {
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const hasSelection = selection.length > 0;
@@ -218,13 +219,61 @@ export function Toolbar() {
           title={theme === "dark" ? "Dark mode — switch to light" : "Light mode — switch to dark"}
           onClick={() => store.getState().toggleTheme()}
         />
+        <div className="relative">
+          <ToolButton
+            label="Clear"
+            title="Clear the stage or the whole document"
+            active={clearOpen}
+            onClick={() => setClearOpen((open) => !open)}
+          />
+          {clearOpen && (
+            <div className="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-md border border-neutral-700 bg-neutral-900 py-1 shadow-lg">
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-sm text-neutral-200 hover:bg-neutral-800"
+                onClick={() => {
+                  setClearOpen(false);
+                  if (
+                    !confirm(
+                      "Clear the stage? All items, text and shapes will be removed. The input list, outputs and notes are kept. (Undo with Ctrl+Z.)",
+                    )
+                  )
+                    return;
+                  store.getState().clearStage();
+                }}
+              >
+                Clear stage only
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-sm text-red-300 hover:bg-neutral-800"
+                onClick={() => {
+                  setClearOpen(false);
+                  if (
+                    !confirm(
+                      "Clear the whole document? The stage, input list, outputs and notes will all be removed. (Undo with Ctrl+Z.)",
+                    )
+                  )
+                    return;
+                  store.getState().clearDocument();
+                  store.getState().setRiderId(null);
+                  store.getState().setShareToken(null);
+                  store.getState().setSaveState("idle");
+                  window.history.replaceState({}, "", appPath("/"));
+                }}
+              >
+                Clear everything
+              </button>
+            </div>
+          )}
+        </div>
         <ToolButton
           label="New"
-          title="Start a new rider"
+          title="Start a new rider from the example layout"
           onClick={() => {
             if (!confirm("Start a new rider? Unsaved changes are lost.")) return;
             clearDraft();
-            store.getState().setDoc(createEmptyDoc());
+            store.getState().setDoc(createExampleDoc());
             store.getState().setRiderId(null);
             store.getState().setShareToken(null);
             store.getState().setSaveState("idle");

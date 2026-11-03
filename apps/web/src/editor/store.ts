@@ -123,6 +123,8 @@ interface EditorState {
   setDoc: (doc: StageDoc) => void;
   setMeta: (patch: Partial<StageDoc["meta"]>) => void;
   setFooter: (text: string) => void;
+  clearStage: () => void;
+  clearDocument: () => void;
   setRiderId: (id: string | null) => void;
   setShareToken: (token: string | null) => void;
   setSaveState: (state: SaveState) => void;
@@ -220,6 +222,27 @@ export const useEditorStore = create<EditorState>()(
     setFooter: (text) =>
       set((state) => {
         state.doc.footer.text = text;
+      }),
+
+    clearStage: () =>
+      set((state) => {
+        state.past.push(clone(state.doc));
+        if (state.past.length > HISTORY_LIMIT) state.past.shift();
+        state.future = [];
+        state.doc.items = [];
+        state.doc.texts = [];
+        state.doc.shapes = [];
+        state.doc.arrows = [];
+        state.selection = [];
+      }),
+
+    clearDocument: () =>
+      set((state) => {
+        state.past.push(clone(state.doc));
+        if (state.past.length > HISTORY_LIMIT) state.past.shift();
+        state.future = [];
+        state.doc = createEmptyDoc();
+        state.selection = [];
       }),
 
     setRiderId: (id) =>

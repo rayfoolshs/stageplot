@@ -1,4 +1,5 @@
-import { createEmptyDoc, parseStageDoc, type StageDoc } from "@stageplot/shared";
+import { parseStageDoc, type StageDoc } from "@stageplot/shared";
+import { createExampleDoc } from "./exampleDoc";
 
 const STORAGE_KEY = "stageplot:draft:v1";
 
@@ -29,5 +30,6 @@ export function clearDraft(): void {
 }
 
 export function initialDoc(): StageDoc {
-  return loadDraft() ?? createEmptyDoc();
+  // No saved draft yet: open the example layout so the editor isn't empty.
+  return loadDraft() ?? createExampleDoc();
 }
