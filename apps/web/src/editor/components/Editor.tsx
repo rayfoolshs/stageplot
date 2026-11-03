@@ -4,6 +4,7 @@ import { LibraryPanel } from "./LibraryPanel";
 import { Canvas } from "./Canvas";
 import { InspectorPanel } from "./InspectorPanel";
 import { InputList } from "./InputList";
+import type { StageDoc } from "@stageplot/shared";
 import { initialDoc, saveDraft } from "../persistence";
 import { useEditorStore } from "../store";
 import { Splitter, useStoredSize } from "./Splitter";
@@ -16,7 +17,11 @@ export function Editor({ riderId }: { riderId?: string }) {
   const theme = useEditorStore((s) => s.theme);
   const [loadError, setLoadError] = useState<string | null>(null);
   // Hydrating a doc must not trigger an autosave of what we just loaded.
-  const skipNextSave = useRef(false);
+  // The object we just loaded: autosave ignores exactly that value, but any
+  // subsequent edit (a new object) saves. A boolean flag was consumed by the
+  // first user edit instead of the load, so the first change after opening a
+  // document was never persisted.
+  const loadedDoc = useRef<StageDoc | null>(null);
 
   // Panel layout — remembered between visits.
   const [libraryWidth, setLibraryWidth] = useStoredSize("stageplot:ui:library", 256, 180, 460);
@@ -29,8 +34,9 @@ export function Editor({ riderId }: { riderId?: string }) {
     const store = useEditorStore.getState();
 
     if (!riderId) {
-      skipNextSave.current = true;
-      store.setDoc(initialDoc());
+      const doc = initialDoc();
+      loadedDoc.current = doc;
+      store.setDoc(doc);
       store.setRiderId(null);
       store.setShareToken(null);
       store.setSaveState("idle");
@@ -42,7 +48,7 @@ export function Editor({ riderId }: { riderId?: string }) {
       .get(riderId)
       .then(({ rider }) => {
         if (cancelled) return;
-        skipNextSave.current = true;
+        loadedDoc.current = rider.doc;
         store.setDoc(rider.doc);
         store.setRiderId(rider.id);
         store.setShareToken(rider.shareToken ?? null);
@@ -79,10 +85,7 @@ export function Editor({ riderId }: { riderId?: string }) {
     let timer: number | undefined;
     const unsubscribe = useEditorStore.subscribe((state, prev) => {
       if (state.doc === prev.doc) return;
-      if (skipNextSave.current) {
-        skipNextSave.current = false;
-        return;
-      }
+      if (state.doc === loadedDoc.current) return;
       window.clearTimeout(timer);
 
       if (state.riderId) {
