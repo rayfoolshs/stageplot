@@ -5,6 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import { createEmptyDoc, parseStageDoc } from "@stageplot/shared";
 import { closePdfRenderer, renderPdf } from "./pdf";
 import { authRoutes } from "./auth/routes";
+import { riderRoutes } from "./riders/routes";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -15,7 +16,9 @@ if (IS_PROD && SESSION_SECRET.startsWith("dev-only")) {
   throw new Error("Set a real SESSION_SECRET before running in production.");
 }
 
-const app = Fastify({ logger: true });
+// A rider document plus an SVG thumbnail comfortably fits; cap it so a bad
+// client can't hand us an unbounded JSON body.
+const app = Fastify({ logger: true, bodyLimit: 3 * 1024 * 1024 });
 
 // In-memory session store is fine for dev; M4 swaps in a persistent store.
 await app.register(cookie);
@@ -36,6 +39,7 @@ await app.register(session, {
 await app.register(rateLimit, { global: false });
 
 await app.register(authRoutes);
+await app.register(riderRoutes);
 
 app.get("/api/health", async () => ({
   ok: true,

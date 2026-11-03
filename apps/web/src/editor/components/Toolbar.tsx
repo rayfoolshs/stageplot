@@ -2,8 +2,10 @@ import { useState } from "react";
 import { createEmptyDoc } from "@stageplot/shared";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
-import { downloadPdf } from "../../lib/pdf";
 import { AccountMenu } from "../../auth/AccountMenu";
+import { useAuthStore } from "../../auth/store";
+import { saveToCloud } from "../../riders/save";
+import { downloadPdf } from "../../lib/pdf";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
 
@@ -62,7 +64,12 @@ export function Toolbar() {
   const tool = useEditorStore((s) => s.tool);
   const theme = useEditorStore((s) => s.theme);
   const selection = useEditorStore((s) => s.selection);
+  const riderId = useEditorStore((s) => s.riderId);
+  const saveState = useEditorStore((s) => s.saveState);
+  const user = useAuthStore((s) => s.user);
   const [exporting, setExporting] = useState(false);
+  const [cloudBusy, setCloudBusy] = useState(false);
+  const [cloudError, setCloudError] = useState<string | null>(null);
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const hasSelection = selection.length > 0;
@@ -119,6 +126,62 @@ export function Toolbar() {
       <ToolButton label="Labels" title="Show / hide item labels" active={showLabels} onClick={() => store.getState().toggleLabels()} />
 
       <div className="ml-auto flex items-center gap-1">
+        {user && (
+          <a
+            href="/riders"
+            className="rounded-md bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700"
+          >
+            My riders
+          </a>
+        )}
+
+        {user && !riderId && (
+          <button
+            type="button"
+            title={
+              cloudError
+                ? cloudError
+                : "Save this rider to your account (autosaves afterwards)"
+            }
+            disabled={cloudBusy}
+            onClick={async () => {
+              setCloudBusy(true);
+              setCloudError(null);
+              try {
+                await saveToCloud();
+              } catch (err) {
+                const message =
+                  err instanceof Error ? err.message : "Could not save to the cloud.";
+                setCloudError(message);
+              } finally {
+                setCloudBusy(false);
+              }
+            }}
+            className={`rounded-md px-2.5 py-1.5 text-sm ${
+              cloudError
+                ? "bg-red-900/60 text-red-200"
+                : "bg-neutral-800 text-neutral-200 hover:bg-neutral-700"
+            } disabled:cursor-wait disabled:opacity-60`}
+          >
+            {cloudBusy ? "Saving…" : cloudError ? "Save failed" : "Save to cloud"}
+          </button>
+        )}
+
+        {riderId && (
+          <span
+            title={saveState === "error" ? "Autosave failed — your latest edits aren’t saved" : "Cloud autosave"}
+            className={`px-1 text-xs ${
+              saveState === "error" ? "text-red-400" : "text-neutral-500"
+            }`}
+          >
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "error"
+                ? "Save failed"
+                : "Saved"}
+          </span>
+        )}
+
         <AccountMenu />
         <ToolButton
           label={theme === "dark" ? "☾" : "☀"}
@@ -132,6 +195,9 @@ export function Toolbar() {
             if (!confirm("Start a new rider? Unsaved changes are lost.")) return;
             clearDraft();
             store.getState().setDoc(createEmptyDoc());
+            store.getState().setRiderId(null);
+            store.getState().setSaveState("idle");
+            window.history.replaceState({}, "", "/");
           }}
         />
         <button

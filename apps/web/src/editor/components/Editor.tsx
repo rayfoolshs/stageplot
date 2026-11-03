@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Toolbar } from "./Toolbar";
 import { LibraryPanel } from "./LibraryPanel";
 import { Canvas } from "./Canvas";
@@ -7,20 +7,57 @@ import { InputList } from "./InputList";
 import { initialDoc, saveDraft } from "../persistence";
 import { useEditorStore } from "../store";
 import { Splitter, useStoredSize } from "./Splitter";
+import { ridersApi } from "../../riders/api";
+import { saveRiderNow } from "../../riders/save";
+import { ApiError } from "../../lib/http";
 
-export function Editor() {
+export function Editor({ riderId }: { riderId?: string }) {
   const theme = useEditorStore((s) => s.theme);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Hydrating a doc must not trigger an autosave of what we just loaded.
+  const skipNextSave = useRef(false);
 
   // Panel layout — remembered between visits.
   const [libraryWidth, setLibraryWidth] = useStoredSize("stageplot:ui:library", 256, 180, 460);
   const [inspectorWidth, setInspectorWidth] = useStoredSize("stageplot:ui:inspector", 320, 220, 560);
   const [deskHeight, setDeskHeight] = useStoredSize("stageplot:ui:desk", 224, 120, 560);
 
-  // Load the draft once on mount. The theme starts out already resolved in the
-  // store — see `initialTheme`.
+  // Load the rider (or the local draft) once on mount. The theme starts out
+  // already resolved in the store — see `initialTheme`.
   useEffect(() => {
-    useEditorStore.getState().setDoc(initialDoc());
-  }, []);
+    const store = useEditorStore.getState();
+
+    if (!riderId) {
+      skipNextSave.current = true;
+      store.setDoc(initialDoc());
+      store.setRiderId(null);
+      store.setSaveState("idle");
+      return;
+    }
+
+    let cancelled = false;
+    void ridersApi
+      .get(riderId)
+      .then(({ rider }) => {
+        if (cancelled) return;
+        skipNextSave.current = true;
+        store.setDoc(rider.doc);
+        store.setRiderId(rider.id);
+        store.setSaveState("saved");
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.replace(`/login?next=${encodeURIComponent(`/r/${riderId}`)}`);
+          return;
+        }
+        setLoadError(err instanceof Error ? err.message : "Could not load this rider.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [riderId]);
 
   // Apply + persist the theme.
   useEffect(() => {
@@ -28,19 +65,29 @@ export function Editor() {
     root.classList.toggle("light", theme === "light");
     root.style.colorScheme = theme;
     try {
-      localStorage.setItem("stageplot:theme:v2", theme);
+      localStorage.setItem("stageplot:theme", theme);
     } catch {
       /* private mode / storage disabled: the theme just won't persist */
     }
   }, [theme]);
 
-  // Debounced autosave to localStorage whenever the document changes.
+  // Debounced autosave: cloud riders go to the API, local drafts to localStorage.
   useEffect(() => {
     let timer: number | undefined;
     const unsubscribe = useEditorStore.subscribe((state, prev) => {
       if (state.doc === prev.doc) return;
+      if (skipNextSave.current) {
+        skipNextSave.current = false;
+        return;
+      }
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => saveDraft(state.doc), 500);
+
+      if (state.riderId) {
+        state.setSaveState("saving");
+        timer = window.setTimeout(() => void saveRiderNow(), 1000);
+      } else {
+        timer = window.setTimeout(() => saveDraft(state.doc), 500);
+      }
     });
     return () => {
       unsubscribe();
@@ -102,6 +149,23 @@ export function Editor() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  if (loadError) {
+    return (
+      <div className="flex h-full items-center justify-center bg-neutral-950 p-6">
+        <div className="max-w-sm space-y-3 text-center">
+          <h1 className="text-base font-semibold text-neutral-100">Couldn’t open this rider</h1>
+          <p className="text-sm text-neutral-400">{loadError}</p>
+          <a
+            href="/riders"
+            className="inline-block rounded-md bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500"
+          >
+            Back to My riders
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">

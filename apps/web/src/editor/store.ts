@@ -96,8 +96,13 @@ function emptyChannel(number: number): ChannelRow {
   };
 }
 
+export type SaveState = "idle" | "saving" | "saved" | "error";
+
 interface EditorState {
   doc: StageDoc;
+  /** Cloud rider id when this document is bound to the API; null = local draft. */
+  riderId: string | null;
+  saveState: SaveState;
   selection: string[];
   scale: number;
   showGrid: boolean;
@@ -116,6 +121,8 @@ interface EditorState {
   setDoc: (doc: StageDoc) => void;
   setMeta: (patch: Partial<StageDoc["meta"]>) => void;
   setFooter: (text: string) => void;
+  setRiderId: (id: string | null) => void;
+  setSaveState: (state: SaveState) => void;
 
   // stage items
   addItem: (item: LibraryItem, centerX: number, centerY: number) => void;
@@ -154,6 +161,8 @@ interface EditorState {
 export const useEditorStore = create<EditorState>()(
   immer((set, get) => ({
     doc: createEmptyDoc(),
+    riderId: null,
+    saveState: "idle",
     selection: [],
     scale: 1,
     showGrid: true,
@@ -207,6 +216,16 @@ export const useEditorStore = create<EditorState>()(
     setFooter: (text) =>
       set((state) => {
         state.doc.footer.text = text;
+      }),
+
+    setRiderId: (id) =>
+      set((state) => {
+        state.riderId = id;
+      }),
+
+    setSaveState: (saveState) =>
+      set((state) => {
+        state.saveState = saveState;
       }),
 
     addItem: (item, centerX, centerY) =>
