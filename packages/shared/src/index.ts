@@ -1,0 +1,111 @@
+import { z } from "zod";
+
+/**
+ * The rider document. This is the single source of truth for the editor,
+ * the print view and the PDF renderer. Keep it versioned and stable.
+ */
+export const STAGE_DOC_VERSION = 1 as const;
+
+export const OrientationSchema = z.enum(["portrait", "landscape"]);
+export type Orientation = z.infer<typeof OrientationSchema>;
+
+export const StageItemSchema = z.object({
+  id: z.string(),
+  itemKey: z.string(),
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+  rotation: z.number(),
+  flipX: z.boolean(),
+  flipY: z.boolean(),
+  label: z.string().optional(),
+});
+export type StageItem = z.infer<typeof StageItemSchema>;
+
+export const TextItemSchema = z.object({
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+  text: z.string(),
+  fontSize: z.number().positive(),
+  rotation: z.number(),
+});
+export type TextItem = z.infer<typeof TextItemSchema>;
+
+export const ArrowItemSchema = z.object({
+  id: z.string(),
+  x1: z.number(),
+  y1: z.number(),
+  x2: z.number(),
+  y2: z.number(),
+});
+export type ArrowItem = z.infer<typeof ArrowItemSchema>;
+
+export const ChannelRowSchema = z.object({
+  id: z.string(),
+  number: z.number().int(),
+  source: z.string(),
+  mic: z.string(),
+  stand: z.string(),
+  phantom: z.string(),
+  notes: z.string(),
+});
+export type ChannelRow = z.infer<typeof ChannelRowSchema>;
+
+export const StageDocSchema = z.object({
+  version: z.literal(STAGE_DOC_VERSION),
+  stage: z.object({
+    width: z.number().positive(),
+    height: z.number().positive(),
+    background: z.string().optional(),
+  }),
+  items: z.array(StageItemSchema),
+  texts: z.array(TextItemSchema),
+  arrows: z.array(ArrowItemSchema),
+  channels: z.array(ChannelRowSchema),
+  outputs: z.array(ChannelRowSchema),
+  footer: z.object({ text: z.string() }),
+  meta: z.object({
+    name: z.string(),
+    orientation: OrientationSchema,
+  }),
+});
+export type StageDoc = z.infer<typeof StageDocSchema>;
+
+export const DEFAULT_STAGE_WIDTH = 1000;
+export const DEFAULT_STAGE_HEIGHT = 700;
+
+export function createEmptyDoc(name = "Untitled rider"): StageDoc {
+  return {
+    version: STAGE_DOC_VERSION,
+    stage: { width: DEFAULT_STAGE_WIDTH, height: DEFAULT_STAGE_HEIGHT },
+    items: [],
+    texts: [],
+    arrows: [],
+    channels: [],
+    outputs: [],
+    footer: { text: "" },
+    meta: { name, orientation: "landscape" },
+  };
+}
+
+export function parseStageDoc(input: unknown): StageDoc {
+  return StageDocSchema.parse(input);
+}
+
+/** Categories shown in the editor's item library. Artwork lands in M1. */
+export const LIBRARY_CATEGORIES = [
+  "Drums",
+  "Guitars",
+  "Amps",
+  "Keys",
+  "Strings",
+  "Winds",
+  "Mics",
+  "Audio",
+  "People",
+  "Stages",
+  "Text",
+] as const;
+export type LibraryCategory = (typeof LIBRARY_CATEGORIES)[number];
