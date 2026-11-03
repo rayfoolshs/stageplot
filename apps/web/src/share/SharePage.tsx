@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { PrintSheet } from "../print/PrintSheet";
 import { downloadPdf } from "../lib/pdf";
 import { shareApi, type SharedRider } from "./api";
+import { appPath } from "../lib/appPath";
 import "../print/print.css";
 
 /** Public, read-only rider at /s/:token. No account needed. */
@@ -50,7 +51,7 @@ export function SharePage({ token }: { token: string }) {
             </button>
           </>
         )}
-        <a href="/" className="share-brand">
+        <a href={appPath("/")} className="share-brand">
           StagePlot
         </a>
       </div>
@@ -59,7 +60,7 @@ export function SharePage({ token }: { token: string }) {
         <div className="share-error">
           <h1>Link unavailable</h1>
           <p>{error}</p>
-          <a href="/">Go to StagePlot</a>
+          <a href={appPath("/")}>Go to StagePlot</a>
         </div>
       ) : rider ? (
         <PrintSheet doc={rider.doc} />

@@ -124,6 +124,16 @@ route in headless Chrome and returns a PDF. It needs:
 Without the API, the button opens `/print` instead, where the browser's own
 print dialog can save the same layout as a PDF.
 
+### Deploying the static demo (GitHub Pages)
+`npm run build:pages` builds `apps/web` for `https://<user>.github.io/stageplot/`
+(base `/stageplot/`, with a `404.html` fallback for deep links). The Pages app is
+**client-only**: the editor, local drafts and browser-print PDF work; accounts,
+cloud save, sharing and the server-side PDF renderer need the API, so the
+account UI is hidden in that build.
+
+`.github/workflows/deploy-pages.yml` publishes on every push to `main`. In the
+repository, set **Settings → Pages → Source: GitHub Actions** once.
+
 ### Windows notes
 - If PowerShell blocks npm scripts (`npm.ps1` disabled), use `npm.cmd`.
 - If npm's **allow-scripts** policy blocks install scripts, approve and rebuild:

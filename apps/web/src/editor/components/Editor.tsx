@@ -10,6 +10,7 @@ import { Splitter, useStoredSize } from "./Splitter";
 import { ridersApi } from "../../riders/api";
 import { saveRiderNow } from "../../riders/save";
 import { ApiError } from "../../lib/http";
+import { appPath } from "../../lib/appPath";
 
 export function Editor({ riderId }: { riderId?: string }) {
   const theme = useEditorStore((s) => s.theme);
@@ -50,7 +51,7 @@ export function Editor({ riderId }: { riderId?: string }) {
       .catch((err: unknown) => {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
-          window.location.replace(`/login?next=${encodeURIComponent(`/r/${riderId}`)}`);
+          window.location.replace(appPath(`/login?next=${encodeURIComponent(`/r/${riderId}`)}`));
           return;
         }
         setLoadError(err instanceof Error ? err.message : "Could not load this rider.");
@@ -159,7 +160,7 @@ export function Editor({ riderId }: { riderId?: string }) {
           <h1 className="text-base font-semibold text-neutral-100">Couldn’t open this rider</h1>
           <p className="text-sm text-neutral-400">{loadError}</p>
           <a
-            href="/riders"
+            href={appPath("/riders")}
             className="inline-block rounded-md bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500"
           >
             Back to My riders

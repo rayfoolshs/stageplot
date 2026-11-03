@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useEditorStore } from "../editor/store";
 import { shareApi } from "./api";
+import { appPath } from "../lib/appPath";
 import { toast } from "../ui/toast";
 
 /** Owner-side control for the public read-only link. */
@@ -13,7 +14,7 @@ export function ShareDialog({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const url = token ? `${window.location.origin}/s/${token}` : null;
+  const url = token ? `${window.location.origin}${appPath(`/s/${token}`)}` : null;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

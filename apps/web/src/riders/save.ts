@@ -1,6 +1,7 @@
 import { useEditorStore } from "../editor/store";
 import { toast } from "../ui/toast";
 import { ridersApi } from "./api";
+import { appPath } from "../lib/appPath";
 import { renderThumbnail } from "./thumbnail";
 
 let inFlight: Promise<void> | null = null;
@@ -60,5 +61,5 @@ export async function saveToCloud(): Promise<void> {
   // A brand-new rider has no share link; don't inherit a previous one.
   store.setShareToken(null);
   store.setSaveState("saved");
-  window.history.replaceState({}, "", `/r/${rider.id}`);
+  window.history.replaceState({}, "", appPath(`/r/${rider.id}`));
 }

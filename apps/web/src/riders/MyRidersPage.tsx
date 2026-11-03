@@ -4,8 +4,9 @@ import { useAuthStore } from "../auth/store";
 import { AccountMenu } from "../auth/AccountMenu";
 import { ridersApi, type RiderSummary } from "./api";
 import { renderThumbnail } from "./thumbnail";
+import { appPath } from "../lib/appPath";
 
-const LOGIN = `/login?next=${encodeURIComponent("/riders")}`;
+const LOGIN = appPath(`/login?next=${encodeURIComponent("/riders")}`);
 
 export function MyRidersPage() {
   const user = useAuthStore((s) => s.user);
@@ -46,7 +47,7 @@ export function MyRidersPage() {
     try {
       const doc = createEmptyDoc("Untitled rider");
       const { rider } = await ridersApi.create(doc, (await renderThumbnail(doc)) ?? undefined);
-      window.location.assign(`/r/${rider.id}`);
+      window.location.assign(appPath(`/r/${rider.id}`));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create a rider.");
       setCreating(false);
@@ -107,7 +108,7 @@ export function MyRidersPage() {
   return (
     <div className="min-h-full bg-neutral-950 text-neutral-100">
       <header className="flex flex-wrap items-center gap-2 border-b border-neutral-800 bg-neutral-900 px-4 py-2">
-        <a href="/" className="mr-2 text-sm font-semibold tracking-wide">
+        <a href={appPath("/")} className="mr-2 text-sm font-semibold tracking-wide">
           StagePlot
         </a>
         <span className="text-sm text-neutral-500">My riders</span>
@@ -132,7 +133,7 @@ export function MyRidersPage() {
               Saved to your account. Open one to edit — changes autosave.
             </p>
           </div>
-          <a href="/" className="text-xs text-neutral-400 hover:text-neutral-200">
+          <a href={appPath("/")} className="text-xs text-neutral-400 hover:text-neutral-200">
             Local draft editor →
           </a>
         </div>
@@ -160,7 +161,7 @@ export function MyRidersPage() {
                 className="group overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900"
               >
                 <a
-                  href={`/r/${rider.id}`}
+                  href={appPath(`/r/${rider.id}`)}
                   className="block aspect-[10/7] border-b border-neutral-800 bg-white"
                   title={`Open ${rider.name}`}
                 >
@@ -209,7 +210,7 @@ export function MyRidersPage() {
 
                   <div className="flex flex-wrap items-center gap-1 text-xs">
                     <a
-                      href={`/r/${rider.id}`}
+                      href={appPath(`/r/${rider.id}`)}
                       className="rounded bg-neutral-800 px-2 py-1 text-neutral-200 hover:bg-neutral-700"
                     >
                       Open

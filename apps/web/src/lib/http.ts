@@ -28,7 +28,16 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   const text = await response.text();
-  const data = text ? (JSON.parse(text) as unknown) : null;
+  // A static host (e.g. GitHub Pages) answers missing /api routes with HTML;
+  // treat that as "no payload" instead of throwing a JSON syntax error.
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
     const payload = data as ErrorPayload;

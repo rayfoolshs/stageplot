@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "./store";
+import { appPath } from "../lib/appPath";
 
 /** Compact account control for the toolbar: sign in, or the email + sign out. */
 export function AccountMenu() {
@@ -8,6 +9,9 @@ export function AccountMenu() {
   const logout = useAuthStore((s) => s.logout);
   const [busy, setBusy] = useState(false);
 
+  // The Pages build has no API, so there is nothing to sign in to.
+  if (import.meta.env.VITE_STATIC_DEMO === "1") return null;
+
   if (status === "loading") {
     return <span className="w-16 animate-pulse rounded bg-neutral-800 px-2 py-1.5" />;
   }
@@ -15,7 +19,7 @@ export function AccountMenu() {
   if (!user) {
     return (
       <a
-        href="/login"
+        href={appPath("/login")}
         className="rounded-md bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700"
       >
         Sign in

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuthStore } from "./store";
+import { appPath } from "../lib/appPath";
 
 const field =
   "w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-sky-500 focus:outline-none";
@@ -30,7 +31,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
 
   // Guest-only guard: already signed in? Go where they were headed.
   useEffect(() => {
-    if (status === "ready" && user) window.location.replace(next);
+    if (status === "ready" && user) window.location.replace(appPath(next));
   }, [status, user, next]);
 
   const isRegister = mode === "register";
@@ -42,7 +43,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     try {
       if (isRegister) await register(email, password);
       else await login(email, password);
-      window.location.replace(next);
+      window.location.replace(appPath(next));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
       setBusy(false);
@@ -53,7 +54,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     <div className="flex min-h-full items-center justify-center bg-neutral-950 px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <a href="/" className="text-xl font-semibold tracking-wide text-neutral-100">
+          <a href={appPath("/")} className="text-xl font-semibold tracking-wide text-neutral-100">
             StagePlot
           </a>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
@@ -130,7 +131,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <p className="text-center text-xs text-neutral-500">
             {isRegister ? "Already have an account? " : "New to StagePlot? "}
             <a
-              href={isRegister ? "/login" : "/register"}
+              href={appPath(isRegister ? "/login" : "/register")}
               className="font-medium text-sky-400 hover:text-sky-300"
             >
               {isRegister ? "Sign in" : "Create one"}
@@ -139,7 +140,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
         </form>
 
         <p className="mt-4 text-center text-xs text-neutral-600">
-          <a href="/" className="hover:text-neutral-400">
+          <a href={appPath("/")} className="hover:text-neutral-400">
             ← Keep working without an account
           </a>
         </p>

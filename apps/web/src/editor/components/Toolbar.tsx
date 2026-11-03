@@ -7,6 +7,7 @@ import { useAuthStore } from "../../auth/store";
 import { saveToCloud } from "../../riders/save";
 import { downloadPdf } from "../../lib/pdf";
 import { ShareDialog } from "../../share/ShareDialog";
+import { appPath } from "../../lib/appPath";
 import { toast } from "../../ui/toast";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
@@ -14,7 +15,7 @@ const PRINT_DOC_KEY = "stageplot:print-doc";
 /** Open the read-only print view in a new tab (browser print → save as PDF). */
 function openPrintView() {
   localStorage.setItem(PRINT_DOC_KEY, JSON.stringify(useEditorStore.getState().doc));
-  window.open("/print", "_blank");
+  window.open(appPath("/print"), "_blank");
 }
 
 function openPrintViewWithNotice() {
@@ -22,8 +23,16 @@ function openPrintViewWithNotice() {
   openPrintView();
 }
 
+const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === "1";
+
 async function exportPdf() {
   const doc = useEditorStore.getState().doc;
+  // The Pages build has no render API; open the print view inside the click so
+  // the browser still treats it as a user gesture (popup blockers).
+  if (STATIC_DEMO) {
+    openPrintView();
+    return;
+  }
   const ok = await downloadPdf(doc);
   // No API (or no Chrome on the server): fall back to the browser's own
   // "save as PDF" from the print view.
@@ -136,7 +145,7 @@ export function Toolbar() {
       <div className="ml-auto flex items-center gap-1">
         {user && (
           <a
-            href="/riders"
+            href={appPath("/riders")}
             className="rounded-md bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700"
           >
             My riders
@@ -219,7 +228,7 @@ export function Toolbar() {
             store.getState().setRiderId(null);
             store.getState().setShareToken(null);
             store.getState().setSaveState("idle");
-            window.history.replaceState({}, "", "/");
+            window.history.replaceState({}, "", appPath("/"));
           }}
         />
         <button
@@ -236,7 +245,7 @@ export function Toolbar() {
           }}
           className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500 disabled:cursor-wait disabled:opacity-60"
         >
-          {exporting ? "Rendering…" : "Export PDF"}
+          {exporting ? "Rendering…" : STATIC_DEMO ? "Print / Save PDF" : "Export PDF"}
         </button>
       </div>
 
