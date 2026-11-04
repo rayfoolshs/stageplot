@@ -5,6 +5,7 @@ import { AccountMenu } from "../auth/AccountMenu";
 import { ridersApi, type RiderSummary } from "./api";
 import { renderThumbnail } from "./thumbnail";
 import { appPath } from "../lib/appPath";
+import { BRAND } from "../brand";
 
 const LOGIN = appPath(`/login?next=${encodeURIComponent("/riders")}`);
 
@@ -109,7 +110,7 @@ export function MyRidersPage() {
     <div className="min-h-full bg-neutral-950 text-neutral-100">
       <header className="flex flex-wrap items-center gap-2 border-b border-neutral-800 bg-neutral-900 px-4 py-2">
         <a href={appPath("/")} className="mr-2 text-sm font-semibold tracking-wide">
-          StagePlot
+          {BRAND.name} <span className="font-normal text-neutral-500">by {BRAND.author}</span>
         </a>
         <span className="text-sm text-neutral-500">My riders</span>
         <div className="ml-auto flex items-center gap-2">

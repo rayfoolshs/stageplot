@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuthStore } from "./store";
 import { appPath } from "../lib/appPath";
+import { BRAND } from "../brand";
 
 const field =
   "w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-sky-500 focus:outline-none";
@@ -55,7 +56,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <a href={appPath("/")} className="text-xl font-semibold tracking-wide text-neutral-100">
-            StagePlot
+            {BRAND.name} <span className="font-normal text-neutral-500">by {BRAND.author}</span>
           </a>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
             Stage plots &amp; tech riders

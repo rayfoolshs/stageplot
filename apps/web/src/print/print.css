@@ -197,7 +197,7 @@ body,
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 8pt;
+  font-size: 7pt;
 }
 
 .print-table.narrow {
@@ -207,7 +207,7 @@ body,
 .print-table th,
 .print-table td {
   border: 0.5px solid #d1d5db;
-  padding: 0.8mm 1.4mm;
+  padding: 0.6mm 1.2mm;
   text-align: left;
   vertical-align: top;
   overflow: hidden;
@@ -217,7 +217,7 @@ body,
 
 .print-table th {
   background: #f3f4f6;
-  font-size: 7pt;
+  font-size: 6.2pt;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -232,7 +232,7 @@ body,
 }
 
 .print-table td {
-  height: 4.2mm;
+  height: 3.6mm;
 }
 
 .print-table tbody tr:nth-child(even) {

@@ -230,6 +230,12 @@ global keyboard listener bound to a stale store instance. Hard-refresh
 
 ---
 
+## Credits
+
+**StagePlot by Ray Foo** — [www.rayfooproductions.com](https://www.rayfooproductions.com)
+
+---
+
 ## License
 
 Not yet chosen.

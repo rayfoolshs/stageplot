@@ -1,6 +1,7 @@
 import type { ChannelRow, ShapeItem, StageDoc } from "@stageplot/shared";
 import { getLibraryItem } from "../editor/library";
 import { routeCable } from "../editor/routing";
+import { BRAND } from "../brand";
 
 /**
  * The read-only rider: stage plot, input list, monitor outputs and footer.
@@ -101,7 +102,12 @@ export function PrintSheet({ doc }: { doc: StageDoc }) {
 
       <footer className="print-foot">
         {doc.footer.text ? <p>{doc.footer.text}</p> : null}
-        <p className="print-sign">Made with StagePlot</p>
+        <p className="print-sign">
+          {BRAND.byline} ·{" "}
+          <a href={BRAND.url} style={{ color: "inherit" }}>
+            {BRAND.urlLabel}
+          </a>
+        </p>
       </footer>
     </article>
   );

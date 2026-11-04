@@ -3,6 +3,7 @@ import { PrintSheet } from "../print/PrintSheet";
 import { downloadPdf } from "../lib/pdf";
 import { shareApi, type SharedRider } from "./api";
 import { appPath } from "../lib/appPath";
+import { BRAND } from "../brand";
 import "../print/print.css";
 
 /** Public, read-only rider at /s/:token. No account needed. */
@@ -18,7 +19,7 @@ export function SharePage({ token }: { token: string }) {
       .then(({ rider }) => {
         if (cancelled) return;
         setRider(rider);
-        document.title = `${rider.name} — StagePlot`;
+        document.title = `${rider.name} — ${BRAND.byline}`;
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -52,7 +53,7 @@ export function SharePage({ token }: { token: string }) {
           </>
         )}
         <a href={appPath("/")} className="share-brand">
-          StagePlot
+          {BRAND.name} <span>by {BRAND.author}</span>
         </a>
       </div>
 

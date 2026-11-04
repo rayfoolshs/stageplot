@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createExampleDoc } from "../exampleDoc";
 import { downloadRiderFile, readRiderFile } from "../file";
+import { BRAND } from "../../brand";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
 import { AccountMenu } from "../../auth/AccountMenu";
@@ -119,7 +120,15 @@ export function Toolbar() {
 
   return (
     <header className="flex flex-wrap items-center gap-1 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
-      <span className="mr-2 text-sm font-semibold tracking-wide">StagePlot</span>
+      <a
+        href={BRAND.url}
+        target="_blank"
+        rel="noreferrer"
+        title={BRAND.urlLabel}
+        className="mr-2 text-sm font-semibold tracking-wide"
+      >
+        {BRAND.name} <span className="font-normal text-neutral-500">by {BRAND.author}</span>
+      </a>
 
       <ToolButton label="↶" title="Undo (Ctrl+Z)" onClick={() => store.getState().undo()} disabled={!canUndo} />
       <ToolButton label="↷" title="Redo (Ctrl+Shift+Z)" onClick={() => store.getState().redo()} disabled={!canRedo} />
