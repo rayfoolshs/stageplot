@@ -658,6 +658,33 @@ const DigitalSnake: Icon = () => (
   </g>
 );
 
+/* --- power --------------------------------------------------------------- */
+
+/** A wall outlet plate: two vertical pins and an earth slot. */
+const PowerOutlet: Icon = () => (
+  <g {...S}>
+    <rect x="16" y="16" width="68" height="68" rx="10" {...FILL} />
+    <rect x="34" y="30" width="8" height="22" rx="2" {...SOLID} stroke="none" />
+    <rect x="58" y="30" width="8" height="22" rx="2" {...SOLID} stroke="none" />
+    <rect x="38" y="62" width="24" height="8" rx="2" {...SOLID} stroke="none" />
+    <circle cx="25" cy="25" r="2.4" />
+    <circle cx="75" cy="75" r="2.4" />
+  </g>
+);
+
+/** A distro box: one feed in, several outlets out. */
+const PowerDistro: Icon = () => (
+  <g {...S}>
+    <rect x="12" y="24" width="76" height="52" rx="6" {...FILL} />
+    {[30, 50, 70].map((x) => (
+      <g key={x}>
+        <circle cx={x} cy="50" r="9" />
+        <rect x={x - 2} y="44" width="4" height="12" rx="1.5" {...SOLID} stroke="none" />
+      </g>
+    ))}
+  </g>
+);
+
 /* --- catalog ------------------------------------------------------------- */
 
 export const LIBRARY_ITEMS: LibraryItem[] = [
@@ -704,6 +731,9 @@ export const LIBRARY_ITEMS: LibraryItem[] = [
   { key: "mixer", label: "Mixer / console", category: "Audio", w: 200, h: 120, Icon: Mixer },
   { key: "x32", label: "X32 Console", category: "Audio", w: 220, h: 150, Icon: X32Console },
   { key: "digitalsnake", label: "Digital Snake / IO / DI Boxes", category: "Audio", w: 150, h: 150, Icon: DigitalSnake },
+  // power
+  { key: "poweroutlet", label: "Power outlet", category: "Power", w: 80, h: 80, Icon: PowerOutlet },
+  { key: "powerdistro", label: "Power distro", category: "Power", w: 120, h: 90, Icon: PowerDistro },
   // people
   { key: "person", label: "Musician", category: "People", w: 60, h: 110, Icon: Person },
   { key: "singer", label: "Singer", category: "People", w: 90, h: 110, Icon: Singer },

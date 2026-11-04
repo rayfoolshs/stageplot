@@ -45,6 +45,19 @@ export const ArrowItemSchema = z.object({
 export type ArrowItem = z.infer<typeof ArrowItemSchema>;
 
 /**
+ * A power run. The user clicks anchor points; the editor routes an orthogonal
+ * path between them that steers around stage items. Only the anchors are stored
+ * (not the routed line) so the route re-solves whenever the stage changes.
+ */
+export const CableSchema = z.object({
+  id: z.string(),
+  /** flat [x0,y0,x1,y1,...] anchor points */
+  anchors: z.array(z.number()),
+  color: z.string(),
+});
+export type Cable = z.infer<typeof CableSchema>;
+
+/**
  * A drawn shape (rectangle, ellipse or free polygon). Polygon vertices are
  * stored as flat normalized coordinates within the bounding box, so resizing
  * the box scales the shape.
@@ -94,6 +107,7 @@ export const StageDocSchema = z.object({
   texts: z.array(TextItemSchema),
   shapes: z.array(ShapeItemSchema).default([]),
   arrows: z.array(ArrowItemSchema),
+  cables: z.array(CableSchema).default([]),
   channels: z.array(ChannelRowSchema),
   outputs: z.array(ChannelRowSchema),
   footer: z.object({ text: z.string() }),
@@ -115,6 +129,7 @@ export function createEmptyDoc(name = "Untitled rider"): StageDoc {
     texts: [],
     shapes: [],
     arrows: [],
+    cables: [],
     channels: [],
     outputs: [],
     footer: { text: "" },
@@ -140,6 +155,7 @@ export const LIBRARY_CATEGORIES = [
   "Stages",
   "Lighting",
   "Video",
+  "Power",
   "Text",
 ] as const;
 export type LibraryCategory = (typeof LIBRARY_CATEGORIES)[number];

@@ -1,5 +1,6 @@
 import type { ChannelRow, ShapeItem, StageDoc } from "@stageplot/shared";
 import { getLibraryItem } from "../editor/library";
+import { routeCable } from "../editor/routing";
 
 /**
  * The read-only rider: stage plot, input list, monitor outputs and footer.
@@ -110,6 +111,10 @@ export function PrintSheet({ doc }: { doc: StageDoc }) {
 export function StageSvg({ doc }: { doc: StageDoc }) {
   const { width, height } = doc.stage;
   const ink = "#111827";
+  const obstacles = [
+    ...doc.items.map((i) => ({ x: i.x, y: i.y, w: i.w, h: i.h })),
+    ...doc.shapes.map((s) => ({ x: s.x, y: s.y, w: s.w, h: s.h })),
+  ];
 
   return (
     <svg
@@ -137,6 +142,31 @@ export function StageSvg({ doc }: { doc: StageDoc }) {
       {doc.shapes.map((shape) => (
         <PrintShape key={shape.id} shape={shape} />
       ))}
+
+      {doc.cables.map((cable) => {
+        const pts = routeCable(cable.anchors, obstacles, width, height);
+        return (
+          <g key={cable.id}>
+            <polyline
+              points={pts.join(" ")}
+              fill="none"
+              stroke={cable.color}
+              strokeWidth={4}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {Array.from({ length: cable.anchors.length / 2 }).map((_, i) => (
+              <circle
+                key={i}
+                cx={cable.anchors[i * 2]}
+                cy={cable.anchors[i * 2 + 1]}
+                r={3.5}
+                fill={cable.color}
+              />
+            ))}
+          </g>
+        );
+      })}
 
       {doc.items.map((item) => {
         const lib = getLibraryItem(item.itemKey);

@@ -23,12 +23,15 @@ server-side PDF) run locally with `dev:api`.
 ## Features
 
 **Stage editor**
-- Drag-and-drop canvas with **48 items** across 12 categories (drums, amps, keys,
-  guitars, strings, winds, mics, audio, people, stage, lighting, video)
+- Drag-and-drop canvas with **50 items** across 13 categories (drums, amps, keys,
+  guitars, strings, winds, mics, audio, people, stage, lighting, video, power)
 - Move, resize, rotate, flip and layer items; zoom; scroll to pan
 - Optional **captions** under each item (toggle all from the toolbar)
 - **Drawing tools** — rectangle, circle/ellipse, and polygon with draggable
   vertex editing; filled or outline
+- **Power runs** — draw red cable runs (with power-outlet / distro items) that
+  **auto-route around items**: the path re-solves A* on a grid, so a cable steers
+  clear of anything dropped in its way
 - Multi-select (Shift-click and **marquee drag**), duplicate, delete, undo/redo,
   arrow-key nudging
 - **Magnetic grid** — items snap to 25-unit cells while the grid is on (Alt = free)

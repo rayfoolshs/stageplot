@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ShapeItem, StageItem, TextItem } from "@stageplot/shared";
 import { getLibraryItem } from "../library";
+import { routeCable } from "../routing";
 import { useEditorStore } from "../store";
 
 const MIN_SIZE = 12;
@@ -83,6 +84,13 @@ export function Canvas() {
     setPolyPoints(next);
   }, []);
 
+  const [powerPoints, setPowerPoints] = useState<{ x: number; y: number }[]>([]);
+  const powerRef = useRef<{ x: number; y: number }[]>([]);
+  const updatePower = useCallback((next: { x: number; y: number }[]) => {
+    powerRef.current = next;
+    setPowerPoints(next);
+  }, []);
+
   const toStage = useCallback(
     (clientX: number, clientY: number) => {
       const rect = stageRef.current!.getBoundingClientRect();
@@ -105,28 +113,72 @@ export function Canvas() {
     useEditorStore.getState().setTool("select");
   }, []);
 
-  // Reset polygon draft when leaving the polygon tool.
+  const finishCable = useCallback(() => {
+    const pts = powerRef.current;
+    if (pts.length >= 2) useEditorStore.getState().addCable(pts.flatMap((p) => [p.x, p.y]));
+    powerRef.current = [];
+    setPowerPoints([]);
+    useEditorStore.getState().setTool("select");
+  }, []);
+
+  const cancelCable = useCallback(() => {
+    powerRef.current = [];
+    setPowerPoints([]);
+    useEditorStore.getState().setTool("select");
+  }, []);
+
+  // Reset drafts when leaving the matching tool.
   useEffect(() => {
     if (tool !== "polygon") {
       polyRef.current = [];
       setPolyPoints([]);
     }
+    if (tool !== "power") {
+      powerRef.current = [];
+      setPowerPoints([]);
+    }
   }, [tool]);
 
-  // Enter finishes, Escape cancels, while drawing a polygon.
+  // Enter finishes, Escape cancels, while drawing.
   useEffect(() => {
-    if (tool !== "polygon") return;
+    if (tool !== "polygon" && tool !== "power") return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter") finishPolygon();
-      else if (e.key === "Escape") cancelPolygon();
+      if (e.key === "Enter") {
+        if (tool === "polygon") finishPolygon();
+        else finishCable();
+      } else if (e.key === "Escape") {
+        if (tool === "polygon") cancelPolygon();
+        else cancelCable();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [tool, finishPolygon, cancelPolygon]);
+  }, [tool, finishPolygon, cancelPolygon, finishCable, cancelCable]);
 
   const { width, height } = doc.stage;
   const cell = 25 * scale;
   const interactive = tool === "select";
+
+  // Boxes the cable router must steer around.
+  const obstacles = useMemo<Box[]>(() => {
+    const list: Box[] = [];
+    for (const i of doc.items) list.push({ x: i.x, y: i.y, w: i.w, h: i.h });
+    for (const s of doc.shapes) list.push({ x: s.x, y: s.y, w: s.w, h: s.h });
+    return list;
+  }, [doc.items, doc.shapes]);
+
+  // Routes re-solve whenever the stage or the anchors change, so a cable moves
+  // itself out of the way of anything new dropped on top of it.
+  const cableRoutes = useMemo(
+    () =>
+      doc.cables.map((c) => ({
+        id: c.id,
+        color: c.color,
+        anchors: c.anchors,
+        points: routeCable(c.anchors, obstacles, width, height),
+      })),
+    [doc.cables, obstacles, width, height],
+  );
 
   const onStagePointerDown = (e: ReactPointerEvent) => {
     blurActiveField();
@@ -191,6 +243,11 @@ export function Canvas() {
       updatePoly([...prev, p]);
       return;
     }
+    if (tool === "power") {
+      const p = toStage(e.clientX, e.clientY);
+      updatePower([...powerRef.current, p]);
+      return;
+    }
     // rect / ellipse: drag out a box
     const start = toStage(e.clientX, e.clientY);
     let cur = start;
@@ -220,10 +277,11 @@ export function Canvas() {
         data-stage
         onPointerDown={onStagePointerDown}
         onPointerMove={(e) => {
-          if (tool === "polygon") setHover(toStage(e.clientX, e.clientY));
+          if (tool === "polygon" || tool === "power") setHover(toStage(e.clientX, e.clientY));
         }}
         onDoubleClick={() => {
           if (tool === "polygon") finishPolygon();
+          else if (tool === "power") finishCable();
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -268,6 +326,52 @@ export function Canvas() {
               toStage={toStage}
             />
           ))}
+          {/* Power cables: routed around the gear, drawn underneath it. */}
+          <svg
+            className="absolute inset-0"
+            width={width * scale}
+            height={height * scale}
+            viewBox={`0 0 ${width} ${height}`}
+            style={{ overflow: "visible", pointerEvents: "none" }}
+          >
+            {cableRoutes.map((route) => {
+              const pts = route.points.join(" ");
+              const isSel = selection.includes(route.id);
+              return (
+                <g key={route.id}>
+                  <polyline
+                    points={pts}
+                    fill="none"
+                    stroke={route.color}
+                    strokeWidth={isSel ? 6 : 4}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    opacity={isSel ? 1 : 0.85}
+                  />
+                  <polyline
+                    points={pts}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={16}
+                    style={{ pointerEvents: interactive ? "stroke" : "none", cursor: "pointer" }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      useEditorStore.getState().setSelection([route.id]);
+                    }}
+                  />
+                  {Array.from({ length: route.anchors.length / 2 }).map((_, i) => (
+                    <circle
+                      key={i}
+                      cx={route.anchors[i * 2]}
+                      cy={route.anchors[i * 2 + 1]}
+                      r={3.5}
+                      fill={route.color}
+                    />
+                  ))}
+                </g>
+              );
+            })}
+          </svg>
           {doc.items.map((item) => (
             <StageItemNode
               key={item.id}
@@ -368,6 +472,36 @@ export function Canvas() {
               borderRadius: tool === "ellipse" ? "50%" : 0,
             }}
           />
+        )}
+        {tool === "power" && powerPoints.length > 0 && (
+          <svg
+            className="pointer-events-none absolute inset-0"
+            width={width * scale}
+            height={height * scale}
+            viewBox={`0 0 ${width} ${height}`}
+            style={{ overflow: "visible" }}
+          >
+            <polyline
+              points={routeCable(
+                [
+                  ...powerPoints.flatMap((p) => [p.x, p.y]),
+                  ...(hover ? [hover.x, hover.y] : []),
+                ],
+                obstacles,
+                width,
+                height,
+              ).join(" ")}
+              fill="none"
+              stroke="#dc2626"
+              strokeWidth={4}
+              strokeDasharray="7 5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {powerPoints.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={4} fill="#dc2626" />
+            ))}
+          </svg>
         )}
         {tool === "polygon" && polyPoints.length > 0 && (
           <svg

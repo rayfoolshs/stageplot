@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import {
   createEmptyDoc,
+  type Cable,
   type ChannelRow,
   type ShapeItem,
   type ShapeKind,
@@ -12,7 +13,7 @@ import {
 import { getLibraryItem, type LibraryItem } from "./library";
 
 export type ListKind = "channels" | "outputs";
-export type DrawTool = "select" | ShapeKind;
+export type DrawTool = "select" | ShapeKind | "power";
 export type Theme = "dark" | "light";
 
 let idCounter = 0;
@@ -138,6 +139,8 @@ interface EditorState {
   updateItem: (id: string, patch: Partial<StageItem>) => void;
   updateText: (id: string, patch: Partial<TextItem>) => void;
   updateShape: (id: string, patch: Partial<ShapeItem>) => void;
+  addCable: (anchors: number[], color?: string) => void;
+  updateCable: (id: string, patch: Partial<Cable>) => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
   moveSelected: (dx: number, dy: number) => void;
@@ -195,7 +198,8 @@ export const useEditorStore = create<EditorState>()(
         state.selection = state.selection.filter((id) =>
           state.doc.items.some((i) => i.id === id) ||
           state.doc.texts.some((t) => t.id === id) ||
-          state.doc.shapes.some((sh) => sh.id === id),
+          state.doc.shapes.some((sh) => sh.id === id) ||
+          state.doc.cables.some((c) => c.id === id),
         );
       }),
 
@@ -239,6 +243,7 @@ export const useEditorStore = create<EditorState>()(
         state.doc.texts = [];
         state.doc.shapes = [];
         state.doc.arrows = [];
+        state.doc.cables = [];
         state.selection = [];
       }),
 
@@ -331,6 +336,22 @@ export const useEditorStore = create<EditorState>()(
         if (el) Object.assign(el, patch);
       }),
 
+    addCable: (anchors, color = "#dc2626") =>
+      set((state) => {
+        state.past.push(clone(state.doc));
+        if (state.past.length > HISTORY_LIMIT) state.past.shift();
+        state.future = [];
+        const el: Cable = { id: newId("cb"), anchors: [...anchors], color };
+        state.doc.cables.push(el);
+        state.selection = [el.id];
+      }),
+
+    updateCable: (id, patch) =>
+      set((state) => {
+        const el = state.doc.cables.find((c) => c.id === id);
+        if (el) Object.assign(el, patch);
+      }),
+
     addShapeFromDrag: (kind, x, y, w, h) =>
       set((state) => {
         state.past.push(clone(state.doc));
@@ -394,6 +415,7 @@ export const useEditorStore = create<EditorState>()(
         state.doc.items = state.doc.items.filter((i) => !sel.has(i.id));
         state.doc.texts = state.doc.texts.filter((t) => !sel.has(t.id));
         state.doc.shapes = state.doc.shapes.filter((sh) => !sel.has(sh.id));
+        state.doc.cables = state.doc.cables.filter((cb) => !sel.has(cb.id));
         if (orphanRows.size > 0) {
           state.doc.outputs = state.doc.outputs
             .filter((o) => !orphanRows.has(o.id))
@@ -436,9 +458,17 @@ export const useEditorStore = create<EditorState>()(
             newIds.push(copy.id);
             return copy;
           });
+        const cableCopies = state.doc.cables
+          .filter((c) => sel.includes(c.id))
+          .map((c) => {
+            const copy = { ...c, id: newId("cb"), anchors: c.anchors.map((v) => v + 24) };
+            newIds.push(copy.id);
+            return copy;
+          });
         state.doc.items.push(...itemCopies);
         state.doc.texts.push(...textCopies);
         state.doc.shapes.push(...shapeCopies);
+        state.doc.cables.push(...cableCopies);
         state.selection = newIds;
       }),
 

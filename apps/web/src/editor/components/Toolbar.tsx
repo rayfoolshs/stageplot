@@ -107,6 +107,12 @@ export function Toolbar() {
       <ToolButton label="Rect" title="Draw a rectangle" active={tool === "rect"} onClick={() => store.getState().setTool("rect")} />
       <ToolButton label="Circle" title="Draw a circle / ellipse" active={tool === "ellipse"} onClick={() => store.getState().setTool("ellipse")} />
       <ToolButton label="Polygon" title="Draw a polygon — click points, Enter or double-click to finish" active={tool === "polygon"} onClick={() => store.getState().setTool("polygon")} />
+      <ToolButton
+        label="Power"
+        title="Draw a red power run that routes around items — click points, Enter or double-click to finish"
+        active={tool === "power"}
+        onClick={() => store.getState().setTool("power")}
+      />
 
       <Divider />
 
