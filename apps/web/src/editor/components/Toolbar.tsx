@@ -11,6 +11,7 @@ import { saveToCloud } from "../../riders/save";
 import { downloadPdf } from "../../lib/pdf";
 import { ShareDialog } from "../../share/ShareDialog";
 import { appPath } from "../../lib/appPath";
+import { STATIC_DEMO } from "../../lib/env";
 import { toast } from "../../ui/toast";
 
 const PRINT_DOC_KEY = "stageplot:print-doc";
@@ -25,8 +26,6 @@ function openPrintViewWithNotice() {
   toast("PDF service unavailable — opening the print view instead.");
   openPrintView();
 }
-
-const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === "1";
 
 async function exportPdf() {
   const doc = useEditorStore.getState().doc;

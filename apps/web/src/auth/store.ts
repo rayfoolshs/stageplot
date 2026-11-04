@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { authApi, type AuthUser } from "./api";
+import { STATIC_DEMO } from "../lib/env";
 
 type AuthState = {
   user: AuthUser | null;
@@ -16,6 +17,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   status: "loading",
 
   refresh: async () => {
+    // The static Pages demo has no API — probing it only produces a 404.
+    if (STATIC_DEMO) {
+      set({ user: null, status: "ready" });
+      return;
+    }
     try {
       const { user } = await authApi.me();
       set({ user, status: "ready" });
