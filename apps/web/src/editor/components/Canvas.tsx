@@ -167,17 +167,25 @@ export function Canvas() {
     return list;
   }, [doc.items, doc.shapes]);
 
-  // Routes re-solve whenever the stage or the anchors change, so a cable moves
-  // itself out of the way of anything new dropped on top of it.
+  // Routes re-solve when the anchors change (editing a cable) or shortly after
+  // the obstacles settle — so dragging an item doesn't re-run A* every frame.
+  const obstaclesRef = useRef(obstacles);
+  const [obstacleTick, setObstacleTick] = useState(0);
+  useEffect(() => {
+    obstaclesRef.current = obstacles;
+    const t = window.setTimeout(() => setObstacleTick((n) => n + 1), 120);
+    return () => window.clearTimeout(t);
+  }, [obstacles]);
+
   const cableRoutes = useMemo(
     () =>
       doc.cables.map((c) => ({
         id: c.id,
         color: c.color,
         anchors: c.anchors,
-        points: routeCable(c.anchors, obstacles, width, height),
+        points: routeCable(c.anchors, obstaclesRef.current, width, height),
       })),
-    [doc.cables, obstacles, width, height],
+    [doc.cables, obstacleTick, width, height],
   );
 
   const onStagePointerDown = (e: ReactPointerEvent) => {
@@ -347,25 +355,57 @@ export function Canvas() {
                     strokeLinejoin="round"
                     strokeLinecap="round"
                     opacity={isSel ? 1 : 0.85}
+                    style={{ pointerEvents: "none" }}
                   />
+                  {/* hit area — click to select, drag to move the whole run */}
                   <polyline
                     points={pts}
                     fill="none"
                     stroke="transparent"
                     strokeWidth={16}
-                    style={{ pointerEvents: interactive ? "stroke" : "none", cursor: "pointer" }}
+                    style={{ pointerEvents: interactive ? "stroke" : "none", cursor: "move" }}
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                      useEditorStore.getState().setSelection([route.id]);
+                      const store = useEditorStore.getState();
+                      if (!store.selection.includes(route.id)) store.setSelection([route.id]);
+                      store.pushHistory();
+                      const start = route.anchors.slice();
+                      beginPointerDrag(e, (dx, dy) => {
+                        const next = start.map((v, i) =>
+                          i % 2 === 0 ? v + dx / scale : v + dy / scale,
+                        );
+                        useEditorStore.getState().updateCable(route.id, { anchors: next });
+                      });
                     }}
                   />
+                  {/* anchors — drag one to reshape the run */}
                   {Array.from({ length: route.anchors.length / 2 }).map((_, i) => (
                     <circle
                       key={i}
                       cx={route.anchors[i * 2]}
                       cy={route.anchors[i * 2 + 1]}
-                      r={3.5}
+                      r={isSel ? 6.5 : 3.5}
                       fill={route.color}
+                      stroke={isSel ? "#ffffff" : "none"}
+                      strokeWidth={isSel ? 1.5 : 0}
+                      style={{
+                        pointerEvents: isSel && interactive ? "all" : "none",
+                        cursor: "grab",
+                      }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        const store = useEditorStore.getState();
+                        if (!store.selection.includes(route.id)) store.setSelection([route.id]);
+                        store.pushHistory();
+                        const start = route.anchors.slice();
+                        beginPointerDrag(e, (_dx, _dy, clientX, clientY) => {
+                          const p = toStage(clientX, clientY);
+                          const next = start.slice();
+                          next[i * 2] = p.x;
+                          next[i * 2 + 1] = p.y;
+                          useEditorStore.getState().updateCable(route.id, { anchors: next });
+                        });
+                      }}
                     />
                   ))}
                 </g>

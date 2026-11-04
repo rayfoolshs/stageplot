@@ -106,6 +106,8 @@ interface EditorState {
   /** Public share token for the bound rider, when one exists. */
   shareToken: string | null;
   saveState: SaveState;
+  /** True while edits exist that haven't reached storage / the API yet. */
+  dirty: boolean;
   selection: string[];
   scale: number;
   showGrid: boolean;
@@ -130,6 +132,7 @@ interface EditorState {
   setRiderId: (id: string | null) => void;
   setShareToken: (token: string | null) => void;
   setSaveState: (state: SaveState) => void;
+  setDirty: (dirty: boolean) => void;
 
   // stage items
   addItem: (item: LibraryItem, centerX: number, centerY: number) => void;
@@ -173,6 +176,7 @@ export const useEditorStore = create<EditorState>()(
     riderId: null,
     shareToken: null,
     saveState: "idle",
+    dirty: false,
     selection: [],
     scale: 1,
     showGrid: true,
@@ -269,6 +273,11 @@ export const useEditorStore = create<EditorState>()(
     setSaveState: (saveState) =>
       set((state) => {
         state.saveState = saveState;
+      }),
+
+    setDirty: (dirty) =>
+      set((state) => {
+        state.dirty = dirty;
       }),
 
     addItem: (item, centerX, centerY) =>

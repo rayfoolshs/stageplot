@@ -87,18 +87,38 @@ export function Editor({ riderId }: { riderId?: string }) {
       if (state.doc === prev.doc) return;
       if (state.doc === loadedDoc.current) return;
       window.clearTimeout(timer);
+      state.setDirty(true);
 
       if (state.riderId) {
         state.setSaveState("saving");
-        timer = window.setTimeout(() => void saveRiderNow(), 1000);
+        timer = window.setTimeout(() => {
+          void saveRiderNow().then(() => useEditorStore.getState().setDirty(false));
+        }, 1000);
       } else {
-        timer = window.setTimeout(() => saveDraft(state.doc), 500);
+        timer = window.setTimeout(() => {
+          saveDraft(state.doc);
+          useEditorStore.getState().setDirty(false);
+        }, 500);
       }
     });
     return () => {
       unsubscribe();
       window.clearTimeout(timer);
     };
+  }, []);
+
+  // Warn before leaving with unsaved work — a failed cloud save, or a local
+  // write that hasn't landed yet.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      const s = useEditorStore.getState();
+      if (s.dirty || s.saveState === "error") {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, []);
 
   // Global keyboard shortcuts (ignored while typing in a field).

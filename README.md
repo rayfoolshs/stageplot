@@ -31,7 +31,8 @@ server-side PDF) run locally with `dev:api`.
   vertex editing; filled or outline
 - **Power runs** — draw red cable runs (with power-outlet / distro items) that
   **auto-route around items**: the path re-solves A* on a grid, so a cable steers
-  clear of anything dropped in its way
+  clear of anything dropped in its way. Select a run to **drag it whole**, drag
+  its **anchors** to reshape it, or delete it
 - Multi-select (Shift-click and **marquee drag**), duplicate, delete, undo/redo,
   arrow-key nudging
 - **Magnetic grid** — items snap to 25-unit cells while the grid is on (Alt = free)
@@ -51,6 +52,10 @@ server-side PDF) run locally with `dev:api`.
 
 **Outputs & document**
 - Output list for monitors / in-ears
+- **Save / open a rider as a file** (`.stageplot.json`) — a portable backup that
+  needs no account; useful for templates and sending a rider to a bandmate
+- Autosave to the browser (and the cloud when signed in); leaving with unsaved
+  changes triggers a warning
 - **PDF export** — one-click download via a headless-Chrome render of the same
   `/print` layout (portrait or landscape); falls back to the browser's print
   dialog if the API isn't running. Long riders paginate cleanly, with the input

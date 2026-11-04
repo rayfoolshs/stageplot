@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { createExampleDoc } from "../exampleDoc";
+import { downloadRiderFile, readRiderFile } from "../file";
 import { useEditorStore } from "../store";
 import { clearDraft } from "../persistence";
 import { AccountMenu } from "../../auth/AccountMenu";
@@ -88,6 +90,27 @@ export function Toolbar() {
   const [cloudError, setCloudError] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
+  const [fileOpen, setFileOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleOpenFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const doc = await readRiderFile(file);
+      const s = useEditorStore.getState();
+      s.setDoc(doc);
+      s.setRiderId(null);
+      s.setShareToken(null);
+      s.setSaveState("idle");
+      s.clearSelection();
+      window.history.replaceState({}, "", appPath("/"));
+      toast("Rider opened.", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Could not open that file.", "error");
+    }
+  }
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const hasSelection = selection.length > 0;
@@ -224,6 +247,46 @@ export function Toolbar() {
           label={theme === "dark" ? "☾" : "☀"}
           title={theme === "dark" ? "Dark mode — switch to light" : "Light mode — switch to dark"}
           onClick={() => store.getState().toggleTheme()}
+        />
+        <div className="relative">
+          <ToolButton
+            label="File"
+            title="Save this rider to a file, or open one"
+            active={fileOpen}
+            onClick={() => setFileOpen((open) => !open)}
+          />
+          {fileOpen && (
+            <div className="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-md border border-neutral-700 bg-neutral-900 py-1 shadow-lg">
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-sm text-neutral-200 hover:bg-neutral-800"
+                onClick={() => {
+                  setFileOpen(false);
+                  downloadRiderFile(store.getState().doc);
+                  toast("Rider saved to your downloads.", "success");
+                }}
+              >
+                Save to file…
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-sm text-neutral-200 hover:bg-neutral-800"
+                onClick={() => {
+                  setFileOpen(false);
+                  fileInputRef.current?.click();
+                }}
+              >
+                Open from file…
+              </button>
+            </div>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleOpenFile}
         />
         <div className="relative">
           <ToolButton
